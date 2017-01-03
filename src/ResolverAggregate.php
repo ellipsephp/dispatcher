@@ -5,9 +5,10 @@ namespace Pmall\Stack;
 use Traversable;
 
 use Pmall\Contracts\Resolver\ResolverInterface;
-use Pmall\Contracts\Resolver\AbstractResolver;
+use Pmall\Contracts\Resolver\ResolverInterface;
+use Pmall\Contracts\Resolver\ElementCantBeResolvedException;
 
-class ResolverAggregate extends AbstractResolver
+class ResolverAggregate extends ResolverInterface
 {
     /**
      * The list of aggregated resolvers.
@@ -62,27 +63,23 @@ class ResolverAggregate extends AbstractResolver
     /**
      * {@inheritdoc}
      */
-    public function canResolve($element)
+    public function resolve($element)
     {
         foreach ($this->resolvers as $resolver)
         {
-            if ($resolver->canResolve($element)) return true;
-        }
+            try {
 
-        return false;
-    }
+                return $resolver->resolve($element);
 
-    /**
-     * {@inheritdoc}
-     */
-    public function getMiddleware($element)
-    {
-        foreach ($this->resolvers as $resolver)
-        {
-            if ($resolver->canResolve($element))
-            {
-                return $resolver->getMiddleware($element);
+            }
+
+            catch (ElementCantBeResolvedException $e) {
+
+                continue;
+
             }
         }
+
+        throw new ElementCantBeResolvedException($element);
     }
 }
