@@ -1,0 +1,33 @@
+{
+    "name": "pmall/stack",
+    "description": "the stack component of the pmall framework",
+    "type": "library",
+    "authors": [
+        {
+            "name": "pmall",
+            "email": "pierre.mallinjoud@gmail.com"
+        }
+    ],
+    "require": {
+        "psr/http-message": "^1.0",
+        "http-interop/http-middleware": "^0.4.0",
+        "container-interop/container-interop": "^1.1",
+        "pmall/contracts-stack": "dev-master",
+        "pmall/contracts-resolver": "dev-master"
+    },
+    "autoload": {
+        "psr-4": {
+            "Pmall\\Stack\\": "src"
+        }
+    },
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "../contracts-stack/.git"
+        },
+        {
+            "type": "vcs",
+            "url": "../contracts-resolver/.git"
+        }
+    ]
+}
