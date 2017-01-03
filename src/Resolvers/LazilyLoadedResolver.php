@@ -2,9 +2,9 @@
 
 namespace Pmall\Stack\Resolvers;
 
-use Pmall\Contracts\Resolver\AbstractResolver;
+use Pmall\Contracts\Resolver\ResolverInterface;
 
-class LazilyLoadedResolver extends AbstractResolver
+class LazilyLoadedResolver extends ResolverInterface
 {
     /**
      * The callaback used to load the resolver.
@@ -45,24 +45,10 @@ class LazilyLoadedResolver extends AbstractResolver
     }
 
     /**
-     * Return whether the lazily loaded resolver can resolve this element.
-     *
-     * @param mixed $element the element which may be resolved.
-     * @return boolean
+     * {@inheritdoc}
      */
-    public function canResolve($element)
+    public function resolve($element)
     {
-        return $this->getResolver()->canResolve($element);
-    }
-
-    /**
-     * Resolve the middleware from the element.
-     *
-     * @param mixed $element the element to resolve.
-     * @return \Interop\Http\ServerMiddleware\MiddlewareInterface
-     */
-    public function getMiddleware($element)
-    {
-        return $this->getResolver()->getMiddleware($element);
+        return $this->getResolver()->resolve($element);
     }
 }
