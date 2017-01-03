@@ -4,7 +4,7 @@ namespace Pmall\Stack\Resolvers;
 
 use Pmall\Contracts\Resolver\ResolverInterface;
 
-class LazilyLoadedResolver extends ResolverInterface
+class LazilyLoadedResolver implements ResolverInterface
 {
     /**
      * The callaback used to load the resolver.
