@@ -13,7 +13,8 @@
         "http-interop/http-middleware": "^0.4.0",
         "container-interop/container-interop": "^1.1",
         "pmall/contracts-stack": "dev-master",
-        "pmall/contracts-resolver": "dev-master"
+        "pmall/contracts-resolver": "dev-master",
+        "pmall/dispatcher": "dev-master"
     },
     "autoload": {
         "psr-4": {
@@ -28,6 +29,10 @@
         {
             "type": "vcs",
             "url": "../contracts-resolver/.git"
+        },
+        {
+            "type": "vcs",
+            "url": "../dispatcher/.git"
         }
     ]
 }

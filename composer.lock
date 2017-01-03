@@ -4,8 +4,8 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "0834bcf37159a7db50fc034fa441a842",
-    "content-hash": "293a474fbd98698e3a798ba5939dac5d",
+    "hash": "a1ec4014928a632ad6456fefaca62ea3",
+    "content-hash": "3697af8bcd37ce72010762eb1a0345a1",
     "packages": [
         {
             "name": "container-interop/container-interop",
@@ -174,6 +174,34 @@
             "time": "2017-01-03 19:15:46"
         },
         {
+            "name": "pmall/dispatcher",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "../dispatcher",
+                "reference": "c0ef78a68c7af17c14803b94321ddbd52a847333"
+            },
+            "require": {
+                "http-interop/http-middleware": "^0.4.0",
+                "pmall/contracts-stack": "dev-master",
+                "psr/http-message": "^1.0"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Pmall\\Dispatcher\\": "src"
+                }
+            },
+            "authors": [
+                {
+                    "name": "pmall",
+                    "email": "pierre.mallinjoud@gmail.com"
+                }
+            ],
+            "description": "the dispatcher component of the pmall framework",
+            "time": "2017-01-03 19:50:25"
+        },
+        {
             "name": "psr/http-message",
             "version": "1.0.1",
             "source": {
@@ -229,7 +257,8 @@
     "minimum-stability": "stable",
     "stability-flags": {
         "pmall/contracts-stack": 20,
-        "pmall/contracts-resolver": 20
+        "pmall/contracts-resolver": 20,
+        "pmall/dispatcher": 20
     },
     "prefer-stable": false,
     "prefer-lowest": false,
