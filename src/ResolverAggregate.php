@@ -5,10 +5,9 @@ namespace Pmall\Stack;
 use Traversable;
 
 use Pmall\Contracts\Resolver\ResolverInterface;
-use Pmall\Contracts\Resolver\ResolverInterface;
 use Pmall\Contracts\Resolver\ElementCantBeResolvedException;
 
-class ResolverAggregate extends ResolverInterface
+class ResolverAggregate implements ResolverInterface
 {
     /**
      * The list of aggregated resolvers.
