@@ -1,6 +1,6 @@
 <?php
 
-namespace Pmall\Stack\Resolvers\Wrappers;
+namespace Pmall\Stack;
 
 use Psr\Http\Message\ServerRequestInterface;
 
