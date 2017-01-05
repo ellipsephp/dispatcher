@@ -4,7 +4,7 @@ namespace Pmall\Stack\Resolvers;
 
 use Pmall\Contracts\Resolver\AbstractResolver;
 
-use Pmall\Stack\Resolvers\Wrappers\CallableWrapper;
+use Pmall\Stack\CallableWrapper;
 
 class CallableResolver extends AbstractResolver
 {
