@@ -6,7 +6,7 @@ use Pmall\Contracts\Resolver\ResolverInterface;
 
 use Pmall\Stack\MiddlewareStack;
 
-class RecursiveResolver extends ResolverInterface
+class RecursiveResolver implements ResolverInterface
 {
     /**
      * The underlying resolver to call when the thing to resolve is not an
