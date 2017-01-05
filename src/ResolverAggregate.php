@@ -68,7 +68,7 @@ class ResolverAggregate implements ResolverInterface
         {
             try {
 
-                return $resolver->resolve($element);
+                return $resolver->resolve($element, $this);
 
             }
 
