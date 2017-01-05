@@ -5,14 +5,11 @@ namespace Pmall\Stack;
 use Traversable;
 
 use Psr\Http\Message\ServerRequestInterface;
-use Psr\Http\Message\ResponseInterface;
 
 use Interop\Http\ServerMiddleware\DelegateInterface;
 
 use Pmall\Contracts\Stack\MiddlewareStackInterface;
 use Pmall\Contracts\Resolver\ResolverInterface;
-
-use Pmall\Dispatcher\Dispatcher;
 
 class MiddlewareStack implements MiddlewareStackInterface
 {
@@ -104,20 +101,37 @@ class MiddlewareStack implements MiddlewareStackInterface
     }
 
     /**
-     * Return the middleware at the given index by resolving the corresponding
-     * element.
+     * Get a delegate containing a middleware resolved from the element at a
+     * given index.
      *
-     * @param int $index the index of the element.
-     * @return \Interop\Http\ServerMiddleware\MiddlewareInterface
+     * @param int $index the index of the element to resolve.
+     * @return \Interop\Http\ServerMiddleware\DelegateInterface
      */
-    public function get($index)
+    private function getDelegate($index)
     {
         if (array_key_exists($index, $this->elements)) {
 
-            // May throw a Pmall\Contracts\Resolver\ElementCantBeResolvedException.
-            return $this->resolver->resolve($this->elements[$index]);
+            $element = $this->elements[$index];
+
+            $middleware = $this->resolver->resolve($element);
+
+            return new Delegate($middleware, $this->getDelegate($index + 1));
 
         }
+
+        return new FinalDelegate;
+    }
+
+    /**
+     * Dispatch a request through the middleware stack and return the produced
+     * response.
+     *
+     * @param \Psr\Http\Message\ServerRequestInterface $request the incoming request.
+     * @return \Psr\Http\Message\ResponseInterface
+     */
+    public function dispatch(ServerRequestInterface $request)
+    {
+        return $this->getDelegate(0)->process($request);
     }
 
     /**
@@ -141,8 +155,6 @@ class MiddlewareStack implements MiddlewareStackInterface
      */
     public function __invoke(ServerRequestInterface $request, DelegateInterface $delegate)
     {
-        $stack = $this->withMiddleware(new FinalMiddleware($delegate));
-
-        return (new Dispatcher($stack))->dispatch($request);
+        return $this->with(new FinalMiddleware($delegate))->dispatch($request);
     }
 }
