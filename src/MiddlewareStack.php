@@ -11,6 +11,8 @@ use Interop\Http\ServerMiddleware\DelegateInterface;
 use Pmall\Contracts\Stack\MiddlewareStackInterface;
 use Pmall\Contracts\Resolver\ResolverInterface;
 
+use Pmall\Stack\Resolvers\DefaultResolver;
+
 class MiddlewareStack implements MiddlewareStackInterface
 {
     /**

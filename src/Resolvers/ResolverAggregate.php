@@ -1,6 +1,6 @@
 <?php
 
-namespace Pmall\Stack;
+namespace Pmall\Stack\Resolvers;
 
 use Traversable;
 
@@ -68,7 +68,7 @@ class ResolverAggregate implements ResolverInterface
         {
             try {
 
-                return $resolver->resolve($element, $this);
+                return $resolver->resolve($element);
 
             }
 
