@@ -42,6 +42,6 @@ class RecursiveResolver implements ResolverInterface
 
         }
 
-        return $this->resolver->resolve($element);
+        return $this->resolver->resolve($something);
     }
 }
