@@ -1,6 +1,11 @@
 <?php
 
-namespace Pmall\Stack\Resolvers;
+namespace Pmall\Stack;
+
+use Pmall\Resolvers\RecursiveResolver;
+use Pmall\Resolvers\ResolverAggregate;
+use Pmall\Resolvers\CallableResolver;
+use Pmall\Resolvers\MiddlewareResolver;
 
 class DefaultResolver extends RecursiveResolver
 {
