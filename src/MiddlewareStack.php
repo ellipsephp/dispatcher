@@ -101,28 +101,6 @@ class MiddlewareStack implements MiddlewareStackInterface
     }
 
     /**
-     * Get a delegate containing a middleware resolved from the element at a
-     * given index.
-     *
-     * @param int $index the index of the element to resolve.
-     * @return \Interop\Http\ServerMiddleware\DelegateInterface
-     */
-    private function getDelegate($index)
-    {
-        if (array_key_exists($index, $this->elements)) {
-
-            $element = $this->elements[$index];
-
-            $middleware = $this->resolver->resolve($element);
-
-            return new Delegate($middleware, $this->getDelegate($index + 1));
-
-        }
-
-        return new FinalDelegate;
-    }
-
-    /**
      * Dispatch a request through the middleware stack and return the produced
      * response.
      *
@@ -131,7 +109,29 @@ class MiddlewareStack implements MiddlewareStackInterface
      */
     public function dispatch(ServerRequestInterface $request)
     {
-        return $this->getDelegate(0)->process($request);
+        $dispatcher = function () {
+
+            $generator = function (callable $generator, $index = 0) {
+
+                if (array_key_exists($index, $this->elements)) {
+
+                    $element = $this->elements[$index];
+
+                    $middleware = $this->resolver->resolve($element);
+
+                    return new Delegate($middleware, $generator($generator, $index + 1));
+
+                }
+
+                return new FinalDelegate;
+
+            };
+
+            return $generator($generator);
+
+        };
+
+        return $dispatcher()->process($request);
     }
 
     /**
