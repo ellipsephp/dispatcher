@@ -1,15 +1,16 @@
-<?php
+<?php declare(strict_types=1);
 
-namespace Pmall\Stack;
+namespace Ellipse\Stack;
 
 use Traversable;
 
 use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Message\ResponseInterface;
 
 use Interop\Http\ServerMiddleware\DelegateInterface;
 
-use Pmall\Contracts\Stack\MiddlewareStackInterface;
-use Pmall\Contracts\Resolver\ResolverInterface;
+use Ellipse\Contracts\Stack\MiddlewareStackInterface;
+use Ellipse\Contracts\Resolver\ResolverInterface;
 
 class MiddlewareStack implements MiddlewareStackInterface
 {
@@ -17,12 +18,12 @@ class MiddlewareStack implements MiddlewareStackInterface
      * The resolver used to get middleware from the elements composing the
      * stack.
      *
-     * @var \Pmall\Contracts\Resolver\ResolverInterface
+     * @var \Ellipse\Contracts\Resolver\ResolverInterface
      */
     private $resolver;
 
     /**
-     * The list of elements composing the stack.
+     * The elements list composing the stack.
      *
      * @var array
      */
@@ -30,84 +31,62 @@ class MiddlewareStack implements MiddlewareStackInterface
 
     /**
      * Sets up a middleware stack with an optional resolver and an optional
-     * stack element.
+     * elements list.
      *
-     * @param iterable $elements the default elements to push to the stack.
+     * @param iterable $elements
      */
     public function __construct(ResolverInterface $resolver = null, iterable $elements = [])
     {
         $this->resolver = $resolver ?: new DefaultResolver;
 
-        if($elements instanceof Traversable) {
-
-            $elements = iterator_to_array($elements);
-
-        }
-
-        array_map([$this, 'push'], $elements);
-    }
-
-    /**
-     * Append something to the stack. Allow to ensure the thing can actually
-     * be resolved when pushing a list of things.
-     *
-     * @param mixed $something the thing to push to the stack.
-     * @return void
-     */
-    private function push($something)
-    {
-        $this->elements[] = $something;
+        $this->elements = $elements instanceof Traversable
+            ? iterator_to_array($elements)
+            : $elements;
     }
 
     /**
      * Shortcut for withMiddleware.
      *
-     * @param mixed $something the thing to push.
-     * @return \Pmall\Contracts\Stack\MiddlewareStackInterface
+     * @param mixed $element
+     * @return \Ellipse\Contracts\Stack\MiddlewareStackInterface
      */
-    public function with($thing)
+    public function with($element): MiddlewareStackInterface
     {
-        return $this->withMiddleware($thing);
+        return $this->withMiddleware($element);
     }
 
     /**
-     * Return a new stack pushed with a given thing.
+     * Return a new stack with the given element in its elements list.
      *
-     * @param mixed $something the thing to push.
-     * @return \Pmall\Contracts\Stack\MiddlewareStackInterface
+     * @param mixed $element
+     * @return \Ellipse\Contracts\Stack\MiddlewareStackInterface
      */
-     public function withMiddleware($thing)
-     {
-         $new = clone $this;
+    public function withMiddleware($element): MiddlewareStackInterface
+    {
+        $elements = array_merge($this->elements, [$element]);
 
-         $new->push($thing);
-
-         return $new;
-     }
+        return new MiddlewareStack($this->resolver, $elements);
+    }
 
     /**
-     * Return a new stack with the given resolver.
+     * Return a new stack using the given resolver.
      *
-     * @param \Pmall\Contracts\Resolver\ResolverInterface $resolver the resolver of the new stack.
-     * @return \Pmall\Contracts\Stack\MiddlewareStackInterface
+     * @param \Ellipse\Contracts\Resolver\ResolverInterface $resolver
+     * @return \Ellipse\Contracts\Stack\MiddlewareStackInterface
      */
-    public function withResolver(ResolverInterface $resolver)
+    public function withResolver(ResolverInterface $resolver): MiddlewareStackInterface
     {
-        $new = clone $this;
-
-        $new->resolver = $resolver;
-
-        return $new;
+        return new MiddlewareStack($resolver, $this->elements);
     }
 
     /**
      * Dispatch a request through the middleware stack and return the produced
      * response.
      *
-     * @param \Psr\Http\Message\ServerRequestInterface $request the incoming request.
+     * @param \Psr\Http\Message\ServerRequestInterface $request
      * @return \Psr\Http\Message\ResponseInterface
      */
-    public function dispatch(ServerRequestInterface $request)
+    public function dispatch(ServerRequestInterface $request): ResponseInterface
     {
         $dispatcher = function () {
 
@@ -135,26 +114,14 @@ class MiddlewareStack implements MiddlewareStackInterface
     }
 
     /**
-     * Implements psr 15 middleware convention.
+     * Run the middleware stack as one middleware.
      *
-     * @param \Psr\Http\Message\ServerRequestInterface  $request    the incoming request.
-     * @param \Psr\Http\Message\DelegateInterface       $delegate   the next middleware to execute.
+     * @param \Psr\Http\Message\ServerRequestInterface  $request
+     * @param \Psr\Http\Message\DelegateInterface       $delegate
      * @return \Psr\Http\Message\ResponseInterface
      */
     public function process(ServerRequestInterface $request, DelegateInterface $delegate)
     {
-        return $this($request, $delegate);
-    }
-
-    /**
-    * Run the stack as one middleware.
-    *
-    * @param \Psr\Http\Message\ServerRequestInterface  $request    the incoming request.
-    * @param \Psr\Http\Message\DelegateInterface       $delegate   the next middleware to execute.
-    * @return \Psr\Http\Message\ResponseInterface
-     */
-    public function __invoke(ServerRequestInterface $request, DelegateInterface $delegate)
-    {
-        return $this->with(new FinalMiddleware($delegate))->dispatch($request);
+        return $this->withMiddleware(new FinalMiddleware($delegate))->dispatch($request);
     }
 }

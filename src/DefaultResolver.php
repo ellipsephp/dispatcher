@@ -1,11 +1,11 @@
-<?php
+<?php declare(strict_types=1);
 
-namespace Pmall\Stack;
+namespace Ellipse\Stack;
 
-use Pmall\Resolvers\RecursiveResolver;
-use Pmall\Resolvers\ResolverAggregate;
-use Pmall\Resolvers\CallableResolver;
-use Pmall\Resolvers\MiddlewareResolver;
+use Ellipse\Resolvers\RecursiveResolver;
+use Ellipse\Resolvers\ResolverAggregate;
+use Ellipse\Resolvers\CallableResolver;
+use Ellipse\Resolvers\MiddlewareResolver;
 
 class DefaultResolver extends RecursiveResolver
 {

@@ -1,27 +1,32 @@
 {
-    "name": "pmall/stack",
-    "description": "the stack component of the pmall framework",
+    "name": "ellipse/stack",
     "type": "library",
+    "description": "The stack component of the ellipse framework",
     "authors": [
         {
-            "name": "pmall",
+            "name": "Pierre Mallinjoud",
             "email": "pierre.mallinjoud@gmail.com"
         }
     ],
     "require": {
+        "php": ">=7.1",
         "psr/http-message": "^1.0",
         "http-interop/http-middleware": "^0.4.0",
-        "pmall/contracts-stack": "dev-master",
-        "pmall/contracts-resolver": "dev-master",
-        "pmall/resolvers-recursive": "dev-master",
-        "pmall/resolvers-aggregate": "dev-master",
-        "pmall/resolvers-middleware": "dev-master",
-        "pmall/resolvers-callable": "dev-master",
-        "pmall/resolvers-container": "dev-master"
+        "ellipse/contracts-stack": "dev-master",
+        "ellipse/contracts-resolver": "dev-master",
+        "ellipse/resolvers-recursive": "dev-master",
+        "ellipse/resolvers-aggregate": "dev-master",
+        "ellipse/resolvers-middleware": "dev-master",
+        "ellipse/resolvers-callable": "dev-master"
+    },
+    "require-dev": {
+        "peridot-php/peridot": "^1.19",
+        "peridot-php/leo": "^1.6",
+        "mockery/mockery": "^0.9.7"
     },
     "autoload": {
         "psr-4": {
-            "Pmall\\Stack\\": "src"
+            "Ellipse\\Stack\\": "src"
         }
     }
 }

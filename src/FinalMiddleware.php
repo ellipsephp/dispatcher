@@ -1,6 +1,6 @@
-<?php
+<?php declare(strict_types=1);
 
-namespace Pmall\Stack;
+namespace Ellipse\Stack;
 
 use Psr\Http\Message\ServerRequestInterface;
 
@@ -19,7 +19,7 @@ class FinalMiddleware implements MiddlewareInterface
     /**
      * Set up a final middleware with the delegate from ouside the stack.
      *
-     * @param \Interop\Http\ServerMiddleware\DelegateInterface $delegate the delegate from outside the stack.
+     * @param \Interop\Http\ServerMiddleware\DelegateInterface $delegate
      */
     public function __construct(DelegateInterface $delegate)
     {
@@ -27,26 +27,21 @@ class FinalMiddleware implements MiddlewareInterface
     }
 
     /**
-     * Implements psr 15 middleware convention.
+     * Return the response of the delegate injected from outside the stack.
      *
-     * @param \Psr\Http\Message\ServerRequestInterface  $request    the incoming request.
-     * @param \Psr\Http\Message\DelegateInterface       $delegate   the next middleware to execute.
+     * The injected delegate which delegates the process to the next middleware
+     * of the parent stack is used instead of the delegate passed to this
+     * method, which would fail as it is the final delegate of the current
+     * stack.
+     *
+     * @param \Psr\Http\Message\ServerRequestInterface  $request
+     * @param \Psr\Http\Message\DelegateInterface       $delegate
      * @return \Psr\Http\Message\ResponseInterface
      */
     public function process(ServerRequestInterface $request, DelegateInterface $delegate)
     {
-        return $this($request, $delegate);
-    }
-
-    /**
-    * Return the response of the delegate from outside the stack.
-    *
-    * @param \Psr\Http\Message\ServerRequestInterface  $request    the incoming request.
-    * @param \Psr\Http\Message\DelegateInterface       $final      the final delegate. Obviously no use here.
-    * @return \Psr\Http\Message\ResponseInterface
-     */
-    public function __invoke(ServerRequestInterface $request, DelegateInterface $final)
-    {
+        // the injected delegate should be used instead of the current delegate
+        // which is the final delegate of the stack.
         return $this->delegate->process($request);
     }
 }
