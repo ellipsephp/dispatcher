@@ -8,6 +8,12 @@
         "dispatcher",
         "stack"
     ],
+    "license": "MIT",
+    "homepage": "https://github.com/ellipsephp/stack",
+    "support": {
+        "issues": "https://github.com/ellipsephp/stack/issues",
+        "source": "https://github.com/ellipsephp/stack"
+    },
     "authors": [
         {
             "name": "Pierre Mallinjoud",
