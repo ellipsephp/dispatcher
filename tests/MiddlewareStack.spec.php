@@ -7,7 +7,10 @@ use Interop\Http\ServerMiddleware\MiddlewareInterface;
 use Interop\Http\ServerMiddleware\DelegateInterface;
 
 use Ellipse\Contracts\Stack\MiddlewareStackInterface;
+use Ellipse\Contracts\Stack\Exceptions\NoResponseReturnedException;
+
 use Ellipse\Contracts\Resolver\ResolverInterface;
+use Ellipse\Contracts\Resolver\Exceptions\ElementCantBeResolvedException;
 
 use Ellipse\Stack\MiddlewareStack;
 use Ellipse\Stack\FinalMiddleware;
@@ -32,17 +35,17 @@ describe('MiddlewareStack', function () {
 
     describe('->with()', function () {
 
-        it('should be an alias of ->withMiddleware()', function () {
+        it('should be an alias of ->withElement()', function () {
 
             $element = 'test';
 
-            $stack1 = Mockery::mock(MiddlewareStack::class . '[withMiddleware]', [
+            $stack1 = Mockery::mock(MiddlewareStack::class . '[withElement]', [
                 $this->resolver,
             ]);
 
             $stack2 = Mockery::mock(MiddlewareStackInterface::class);
 
-            $stack1->shouldReceive('withMiddleware')
+            $stack1->shouldReceive('withElement')
                 ->with($element)
                 ->andReturn($stack2);
 
@@ -56,7 +59,39 @@ describe('MiddlewareStack', function () {
 
     describe('->withMiddleware()', function () {
 
-        it('should produce a new MiddlewareStack instance containing the element', function () {
+        it('should produce a new MiddlewareStack instance containing the given instance of MiddlewareInterface', function () {
+
+            $this->middleware->shouldReceive('process')
+                ->andReturn($this->response);
+
+            $stack = $this->stack->withMiddleware($this->middleware);
+
+            expect($stack)->to->be->an->instanceof(MiddlewareStack::class);
+
+            $ref_stack1 = &$this->stack;
+            $ref_stack2 = &$stack;
+
+            expect($ref_stack1)->to->not->be->equal($ref_stack2);
+
+            $test = $stack->dispatch($this->request);
+
+            expect($test)->to->be->equal($this->response);
+
+            $cb = function ($stack, $request) {
+
+                return $stack->dispatch($request);
+
+            };
+
+            expect($cb)->with($this->stack, $this->request)->to->throw(NoResponseReturnedException::class);
+
+        });
+
+    });
+
+    describe('->withElement()', function () {
+
+        it('should produce a new MiddlewareStack instance containing the given element', function () {
 
             $element = 'test';
 
@@ -67,16 +102,26 @@ describe('MiddlewareStack', function () {
             $this->middleware->shouldReceive('process')
                 ->andReturn($this->response);
 
-            $stack = $this->stack->withMiddleware($element);
+            $stack = $this->stack->withElement($element);
+
+            expect($stack)->to->be->an->instanceof(MiddlewareStack::class);
 
             $ref_stack1 = &$this->stack;
             $ref_stack2 = &$stack;
 
-            $test = $stack->withResolver($this->resolver)->dispatch($this->request);
-
-            expect($stack)->to->be->an->instanceof(MiddlewareStack::class);
             expect($ref_stack1)->to->not->be->equal($ref_stack2);
+
+            $test = $stack->dispatch($this->request);
+
             expect($test)->to->be->equal($this->response);
+
+            $cb = function ($stack, $request) {
+
+                return $stack->dispatch($request);
+
+            };
+
+            expect($cb)->with($this->stack, $this->request)->to->throw(NoResponseReturnedException::class);
 
         });
 
@@ -84,27 +129,44 @@ describe('MiddlewareStack', function () {
 
     describe('->withResolver()', function () {
 
-        it('should return a new MiddlewareStack instance using the resolver', function () {
+        it('should produce a new MiddlewareStack instance using the given instance of ResolverInterface', function () {
 
             $element = 'test';
+            $resolver1 = Mockery::mock(ResolverInterface::class);
+            $resolver2 = Mockery::mock(ResolverInterface::class);
 
-            $this->resolver->shouldReceive('resolve')
+            $resolver1->shouldReceive('resolve')
+                ->with($element)
+                ->andThrow(ElementCantBeResolvedException::class);
+
+            $resolver2->shouldReceive('resolve')
                 ->with($element)
                 ->andReturn($this->middleware);
 
             $this->middleware->shouldReceive('process')
                 ->andReturn($this->response);
 
-            $stack = $this->stack->withResolver($this->resolver);
+            $stack1 = new MiddlewareStack($resolver1, [$element]);
+            $stack2 = $stack1->withResolver($resolver2);
 
-            $ref_stack1 = &$this->stack;
-            $ref_stack2 = &$stack;
+            expect($stack2)->to->be->an->instanceof(MiddlewareStack::class);
 
-            $test = $stack->withMiddleware($element)->dispatch($this->request);
+            $ref_stack1 = &$stack1;
+            $ref_stack2 = &$stack2;
 
-            expect($stack)->to->be->an->instanceof(MiddlewareStack::class);
             expect($ref_stack1)->to->not->be->equal($ref_stack2);
+
+            $test = $stack2->dispatch($this->request);
+
             expect($test)->to->be->equal($this->response);
+
+            $cb = function ($stack, $request) {
+
+                return $stack->dispatch($request);
+
+            };
+
+            expect($cb)->with($stack1, $this->request)->to->throw(ElementCantBeResolvedException::class);
 
         });
 
@@ -128,9 +190,9 @@ describe('MiddlewareStack', function () {
                 ->with($this->request)
                 ->andReturn($this->response);
 
-            $value = $stack1->process($this->request, $this->delegate);
+            $test = $stack1->process($this->request, $this->delegate);
 
-            expect($value)->to->be->equal($this->response);
+            expect($test)->to->be->equal($this->response);
 
         });
 

@@ -1,6 +1,7 @@
 <?php
 
-use Ellipse\Contracts\Resolver\ResolverInterface;
+use Ellipse\Resolvers\RecursiveResolver;
+use Ellipse\Resolvers\CallableWrapper;
 
 use Ellipse\Stack\DefaultResolver;
 
@@ -8,13 +9,25 @@ describe('DefaultResolver', function () {
 
     beforeEach(function () {
 
-        $this->delegate = new DefaultResolver;
+        $this->resolver = new DefaultResolver;
 
     });
 
-    it('should implements ResolverInterface', function () {
+    it('should extends RecursiveResolver', function () {
 
-        expect($this->delegate)->to->be->an->instanceof(ResolverInterface::class);
+        expect($this->resolver)->to->be->an->instanceof(RecursiveResolver::class);
+
+    });
+
+    describe('->resolve()', function () {
+
+        it('should resolve callable objects as CallableWrapper instances', function () {
+
+            $test = $this->resolver->resolve(function () {});
+
+            expect($test)->to->be->an->instanceof(CallableWrapper::class);
+
+        });
 
     });
 

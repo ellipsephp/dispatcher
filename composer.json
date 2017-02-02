@@ -1,7 +1,13 @@
 {
     "name": "ellipse/stack",
     "type": "library",
-    "description": "The stack component of the ellipse framework",
+    "description": "The PSR15 middleware stack dispatcher component of the ellipse framework",
+    "keywords": [
+        "psr15",
+        "middleware",
+        "dispatcher",
+        "stack"
+    ],
     "authors": [
         {
             "name": "Pierre Mallinjoud",
@@ -15,8 +21,6 @@
         "ellipse/contracts-stack": "dev-master",
         "ellipse/contracts-resolver": "dev-master",
         "ellipse/resolvers-recursive": "dev-master",
-        "ellipse/resolvers-aggregate": "dev-master",
-        "ellipse/resolvers-middleware": "dev-master",
         "ellipse/resolvers-callable": "dev-master"
     },
     "require-dev": {

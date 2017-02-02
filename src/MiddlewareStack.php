@@ -7,6 +7,7 @@ use Traversable;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
+use Interop\Http\ServerMiddleware\MiddlewareInterface;
 use Interop\Http\ServerMiddleware\DelegateInterface;
 
 use Ellipse\Contracts\Stack\MiddlewareStackInterface;
@@ -52,16 +53,27 @@ class MiddlewareStack implements MiddlewareStackInterface
      */
     public function with($element): MiddlewareStackInterface
     {
-        return $this->withMiddleware($element);
+        return $this->withElement($element);
     }
 
     /**
-     * Return a new stack with the given element in its elements list.
+     * Return a new middleware stack containing the given middleware.
+     *
+     * @param \Interop\Http\ServerMiddleware\MiddlewareInterface $middleware
+     * @return \Ellipse\Contracts\Stack\MiddlewareStackInterface
+    */
+    public function withMiddleware(MiddlewareInterface $middleware): MiddlewareStackInterface
+    {
+        return $this->withElement($middleware);
+    }
+
+    /**
+     * Return a new middleware stack containing the given element.
      *
      * @param mixed $element
      * @return \Ellipse\Contracts\Stack\MiddlewareStackInterface
-     */
-    public function withMiddleware($element): MiddlewareStackInterface
+    */
+    public function withElement($element): MiddlewareStackInterface
     {
         $elements = array_merge($this->elements, [$element]);
 
@@ -96,7 +108,9 @@ class MiddlewareStack implements MiddlewareStackInterface
 
                     $element = $this->elements[$index];
 
-                    $middleware = $this->resolver->resolve($element);
+                    $middleware = ! $element instanceof MiddlewareInterface
+                        ? $this->resolver->resolve($element)
+                        : $element;
 
                     return new Delegate($middleware, $generator($generator, $index + 1));
 
