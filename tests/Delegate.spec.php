@@ -6,8 +6,8 @@ use Psr\Http\Message\ResponseInterface;
 use Interop\Http\ServerMiddleware\MiddlewareInterface;
 use Interop\Http\ServerMiddleware\DelegateInterface;
 
-use Ellipse\Stack\Delegate;
-use Ellipse\Contracts\Stack\Exceptions\InvalidMiddlewareReturnValueException;
+use Ellipse\Dispatcher\Delegate;
+use Ellipse\Contracts\Dispatcher\Exceptions\InvalidMiddlewareReturnValueException;
 
 describe('Delegate', function () {
 

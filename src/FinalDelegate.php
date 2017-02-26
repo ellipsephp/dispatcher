@@ -1,12 +1,12 @@
 <?php declare(strict_types=1);
 
-namespace Ellipse\Stack;
+namespace Ellipse\Dispatcher;
 
 use Psr\Http\Message\ServerRequestInterface;
 
 use Interop\Http\ServerMiddleware\DelegateInterface;
 
-use Ellipse\Contracts\Stack\Exceptions\NoResponseReturnedException;
+use Ellipse\Contracts\Dispatcher\Exceptions\NoResponseReturnedException;
 
 class FinalDelegate implements DelegateInterface
 {

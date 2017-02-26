@@ -1,4 +1,4 @@
-# Middleware stack
+# Dispatcher
 This package is a **Psr-15 middleware dispatcher** requiring **php 7.1**.
 
 The terms used in the following documentation:
@@ -8,17 +8,17 @@ The terms used in the following documentation:
 * *response* represents objects implementing [Psr-7](https://github.com/php-fig/http-message) `ResponseInterface`.
 * *element* represents any value.
 
-This package provides a `MiddlewareStack` class which can be used to dispatch a
-request returning the response produced by a list of middleware composing the
-stack. See [getting started](#getting-started).
+This package provides a `Dispatcher` class which can be used to dispatch a
+request by returning the response produced by a list of middleware.
+See [getting started](#getting-started).
 
-`MiddlewareStack` instances can be composed of middleware as well as any element
+`Dispatcher` instances can be composed of middleware as well as any element
 as long as it can be resolved as a middleware by the resolver. See
 [pushing middleware](#pushing-middleware) and
 [pushing elements](#pushing-elements).
 
-`MiddlewareStack` instances can use a custom resolver for resolving elements
-as middleware. Ellipse packages provide some useful resolvers but any object can
+`Dispatcher` instances can use a custom resolver for resolving elements as
+middleware. Ellipse packages provide some useful resolvers but any object can
 be used as a resolver as long as it implements the
 `Ellipse\Contracts\Resolver\ResolverInterface` from the
 `ellipse/contracts-resolver` package. Also, many resolvers can be aggregated by
@@ -30,7 +30,7 @@ changes.
 
 **Require** php >= 7.1
 
-**Installation** `composer require ellipse/stack`
+**Installation** `composer require ellipse/dispatcher`
 
 **Run tests** `./vendor/bin/peridot tests`
 
@@ -48,7 +48,7 @@ changes.
     * [Default resolver](#default-resolver)
 
 ## Getting started
-A middleware stack can be instantiated with an optional resolver and an optional
+A dispatcher can be instantiated with an optional resolver and an optional
 list of elements to push into the stack. The elements list can either be an
 array or a `Traversable` instance. An element can be either a middleware or
 anything that can be resolved as a middleware by the given resolver.
@@ -58,16 +58,16 @@ anything that can be resolved as a middleware by the given resolver.
 
 namespace App;
 
-use Ellipse\Stack\MiddlewareStack;
+use Ellipse\Dispatcher\Dispatcher;
 
 // Can be instantiated without anything.
-$stack = new MiddlewareStack;
+$dispatcher = new Dispatcher;
 
 // Can be instantiated with an object implementing ResolverInterface.
-$stack = new MiddlewareStack($resolver);
+$dispatcher = new Dispatcher($resolver);
 
 // A list of middleware can also be given on instantiation.
-$stack = new MiddlewareStack($resolver, [
+$dispatcher = new Dispatcher($resolver, [
     $middleware1,
     $middleware2,
     $middleware3,
@@ -75,108 +75,108 @@ $stack = new MiddlewareStack($resolver, [
 
 // The list of middleware can be a Traversable instance containing the list of
 // middleware.
-$stack = new MiddlewareStack($resolver, new \ArrayObject([
+$dispatcher = new Dispatcher($resolver, new \ArrayObject([
     $middleware1,
     $middleware2,
     $middleware3,
 ]));
 ```
 
-Once the `MiddlewareStack` is built it can dispatch requests and return the
-response produced by the list of middleware composing the stack.
+Once the `Dispatcher` is built it can dispatch requests and return the response
+produced by the list of middleware composing the stack.
 
 ```php
 <?php
 
 namespace App;
 
-use Ellipse\Stack\MiddlewareStack;
+use Ellipse\Dispatcher\Dispatcher;
 
-$stack = new MiddlewareStack($resolver, [
+$dispatcher = new Dispatcher($resolver, [
     $middleware1,
     $middleware2,
     $middleware3,
 ]);
 
 // Get the response produced by $middleware1, 2, and 3 for the given request.
-$response = $stack->dispatch($request);
+$response = $dispatcher->dispatch($request);
 ```
 
-Please also note `MiddlewareStack` class implements Psr-15 `MiddlewareInterface`
-so instances of `MiddlewareStack` can be pushed into another instance of
-`MiddlewareStack`, or into any other Psr-15 middleware dispatcher.
+Please also note `Dispatcher` class implements Psr-15 `MiddlewareInterface`
+so instances of `Dispatcher` can be pushed into another instance of
+`Dispatcher`, or into any other Psr-15 middleware dispatcher.
 
 ```php
 <?php
 
 namespace App;
 
-use Ellipse\Stack\MiddlewareStack;
+use Ellipse\Dispatcher\Dispatcher;
 
 // This is a Psr-15 middleware.
-$stack1 = new MiddlewareStack($resolver, [
+$dispatcher1 = new Dispatcher($resolver, [
     $middleware1,
     $middleware2,
     $middleware3,
 ]);
 
 // It can be pushed into another middleware dispatcher.
-$stack2 = new MiddlewareStack($resolver, [
-    $stack1,
+$dispatcher2 = new Dispatcher($resolver, [
+    $dispatcher1,
     $middleware4,
     $middleware5
 ]);
 
 // Get the response produced by $middleware1, 2, 3, 4 and 5 for the given
 // request.
-$response = $stack2->dispatch($request);
+$response = $dispatcher2->dispatch($request);
 ```
 
 ## Pushing middleware
 Middleware are pushed into the stack using the `withMiddleware` method. No
-resolver is needed to use middleware.
+resolver is needed to dispatch middleware.
 
 ```php
 <?php
 
 namespace App;
 
-use Ellipse\Stack\MiddlewareStack;
+use Ellipse\Dispatcher\Dispatcher;
 
-$stack = (new MiddlewareStack)->withMiddleware($middleware);
+$dispatcher = (new Dispatcher)->withMiddleware($middleware);
 ```
 
-Note `MiddlewareStack` instances are immutable, so calling `withMiddleware`
-method returns a new `MiddlewareStack` instance leaving the calling
-`MiddlewareStack` instance unmodified.
+Note `Dispatcher` instances are immutable, so calling `withMiddleware`
+method returns a new `Dispatcher` instance leaving the calling
+`Dispatcher` instance unmodified.
 
 ```php
 <?php
 
 namespace App;
 
-use Ellipse\Stack\MiddlewareStack;
+use Ellipse\Dispatcher\Dispatcher;
 
-$stack1 = new MiddlewareStack($resolver, [
+$dispatcher1 = new Dispatcher($resolver, [
     $middleware1,
     $middleware2,
 ]);
 
-$stack2 = $stack1->withMiddleware($middleware3);
+$dispatcher2 = $dispatcher1->withMiddleware($middleware3);
 
 // Get the response produced by $middleware1, and 2 for the given request.
-$response = $stack1->dispatch($request);
+$response = $dispatcher1->dispatch($request);
 
 // Get the response produced by $middleware1, 2, and 3 for the given request.
-$response = $stack2->dispatch($request);
+$response = $dispatcher2->dispatch($request);
 ```
 
 ## Pushing elements
-Anything can be pushed in `MiddlewareStack` instances as long as the resolver
+Anything can be pushed in `Dispatcher` instances as long as the resolver
 can resolve it as a middleware. If the resolver is not able to resolve an
 element, an `ElementCantBeResolvedException` is thrown.
 
-When no resolver is specified on `MiddlewareStack` instantiation, a
+When no resolver is specified on `Dispatcher` instantiation, a
 `DefaultResolver` instance is used by default. This resolver can resolve
 callable elements and list of callable elements. See
 [default resolver](#default-resolver).
@@ -188,14 +188,14 @@ Elements are pushed into the stack using the `withElement` method :
 
 namespace App;
 
-use Ellipse\Stack\MiddlewareStack;
+use Ellipse\Dispatcher\Dispatcher;
 
-$stack = (new MiddlewareStack($resolver))->withElement($element);
+$dispatcher = (new Dispatcher($resolver))->withElement($element);
 ```
 
-Note `MiddlewareStack` instances are immutable, so calling `withElement`
-method returns a new `MiddlewareStack` instance leaving the calling
-`MiddlewareStack` instance unmodified.
+Note `Dispatcher` instances are immutable, so calling `withElement`
+method returns a new `Dispatcher` instance leaving the calling
+`Dispatcher` instance unmodified.
 
 Also note pushing middleware using the `withElement` method is the same as using
 the `withMiddleware` method.
@@ -211,7 +211,7 @@ the `withMiddleware` method.
 * [Default resolver](#default-resolver)
 
 ### Resolver interface
-A resolver usable by `MiddlewareStack` instances is any object implementing
+A resolver usable by `Dispatcher` instances is any object implementing
 `Ellipse\Contracts\Resolver\ResolverInterface` from the
 `ellipse/contracts-resolver` package.
 
@@ -257,20 +257,21 @@ class MyResolver implements ResolverInterface
 ```
 Please note:
 
-* In order to abstract this process, an `AbstractResolver` class is available from
-  the `ellipse/resolvers-abstract` package. See
+* In order to abstract this process, an `AbstractResolver` class is available
+  from the `ellipse/resolvers-abstract` package. See
   [abstract resolver](#abstract-resolver).
 
 * The recommended way of resolving many element types is to create one resolver
   for each single type of element and then to aggregate those resolvers using
   `ResolverAggregate`. See [resolver aggregate](#resolver-aggregate).
 
-* When no resolver is specified on `MiddlewareStack` instantiation, an instance of
+* When no resolver is specified on `Dispatcher` instantiation, an instance of
   `DefaultResolver` is used by default. See [default resolver](#default-resolver).
 
 * Some useful resolvers are provided by Ellipse packages, see
   [callable resolver](#callable-resolver),
-  [container resolver](#container-resolver), [action resolver](#action-resolver)
+  [container resolver](#container-resolver),
+  [action resolver](#action-resolver)
   and [recursive resolver](#recursive-resolver).
 
 ### Abstract resolver
@@ -313,7 +314,7 @@ and return a response.
 
 namespace App;
 
-use Ellipse\Stack\MiddlewareStack;
+use Ellipse\Dispatcher\Dispatcher;
 use Ellipse\Resolvers\CallableResolver;
 
 // Create a callable behaving like a middleware.
@@ -325,13 +326,13 @@ $some_callable = function ($request, $delegate) {
 
 $resolver = new CallableResolver;
 
-// Create a stack using this resolver and containing the callable.
-$stack = new MiddlewareStack($resolver, [
+// Create a dispatcher using this resolver and containing the callable.
+$dispatcher = new Dispatcher($resolver, [
     $some_callable
 ]);
 
 // The given request is processed by $some_callable.
-$response = $stack->dispatch($request);
+$response = $dispatcher->dispatch($request);
 ```
 
 ### Container resolver
@@ -351,7 +352,7 @@ so your application container should be able to deal with it.
 
 namespace App;
 
-use Ellipse\Stack\MiddlewareStack;
+use Ellipse\Dispatcher\Dispatcher;
 use Ellipse\Resolvers\ContainerResolverServiceProvider;
 use Ellipse\Resolvers\ContainerResolver;
 
@@ -371,15 +372,15 @@ $container->share(SomeMiddleware::class);
 // Get a container resolver instance from the container.
 $resolver = $container->get(ContainerResolver::class);
 
-// Create a stack using this resolver and containing the middleware class name
-// in the elements list.
-$stack = new MiddlewareStack($resolver, [
+// Create a dispatcher using this resolver and containing the middleware class
+// name in the elements list.
+$dispatcher = new Dispatcher($resolver, [
     SomeMiddleware::class,
 ]);
 
 // The given request is processed by an instance of SomeMiddleware retrieved
 // from the container.
-$response = $stack->dispatch($request);
+$response = $dispatcher->dispatch($request);
 ```
 
 ### Action resolver
@@ -442,7 +443,7 @@ class SomeController
 
 namespace App;
 
-use Ellipse\Stack\MiddlewareStack;
+use Ellipse\Dispatcher\Dispatcher;
 use Ellipse\Resolvers\ActionResolverServiceProvider;
 use Ellipse\Resolvers\ActionResolver;
 
@@ -464,14 +465,14 @@ $container->share('resolvers.action.controllers_namespace', 'App\Controllers');
 // Get an action resolver instance from the container.
 $resolver = $container->get(ActionResolver::class);
 
-// Create a stack using this resolver and containing an action string.
-$stack = new MiddlewareStack($resolver, [
+// Create a dispatcher using this resolver and containing an action string.
+$dispatcher = new Dispatcher($resolver, [
     'SomeController@index',
 ]);
 
 // The given request is processed by the index method of the SomeMiddleware
 // class.
-$response = $stack->dispatch($request);
+$response = $dispatcher->dispatch($request);
 ```
 
 ### Recursive resolver
@@ -485,7 +486,7 @@ as parameter which is used to resolve elements in the list.
 
 namespace App;
 
-use Ellipse\Stack\MiddlewareStack;
+use Ellipse\Dispatcher\Dispatcher;
 use Ellipse\Resolvers\RecursiveResolver;
 use Ellipse\Resolvers\CallableResolver;
 
@@ -504,18 +505,18 @@ $callable2 = function ($request, $delegate) {
 // Create the recursive resolver wrapped around a callable resolver.
 $resolver = new RecursiveResolver(new CallableResolver);
 
-// Create a stack using this resolver.
-$stack = new MiddlewareStack($resolver);
+// Create a dispatcher using this resolver.
+$dispatcher = new Dispatcher($resolver);
 
 // Array of elements or Traversable instance of elements can be pushed into the
-// stack.
-$stack = $stack->withElement([
+// dispatcher.
+$dispatcher = $dispatcher->withElement([
     $callable1,
     $callable2,
 ]);
 
 // The given request is processed by callable1 and 2.
-$response = $stack->dispatch($request);
+$response = $dispatcher->dispatch($request);
 ```
 
 ### Resolver aggregate
@@ -528,7 +529,7 @@ allows to use many resolvers at once. It takes this list of resolvers or a
 
 namespace App;
 
-use Ellipse\Stack\MiddlewareStack;
+use Ellipse\Dispatcher\Dispatcher;
 use Ellipse\Resolvers\ContainerResolverServiceProvider;
 use Ellipse\Resolvers\ResolverAggregate;
 use Ellipse\Resolvers\CallableResolver;
@@ -559,19 +560,19 @@ $resolver = new ResolverAggregate([
     $container_resolver,
 ]);
 
-// Create a stack using this resolver and containing a callable and a middleware
-// class name.
-$stack = new MiddlewareStack($resolver, [
+// Create a dispatcher using this resolver and containing a callable and a
+// middleware class name.
+$dispatcher = new Dispatcher($resolver, [
     $callable,
     SomeMiddleware::class,
 ]);
 
 // The given request is processed by $callable and SomeMiddleware.
-$response = $stack->dispatch($request);
+$response = $dispatcher->dispatch($request);
 ```
 
 ### Default resolver
-When no resolver is specified on middleware stack instanciation, a
+When no resolver is specified on middleware stack instantiation, a
 `Defaultresolver` instance is used. It is just a `RecursiveResolver` wrapping
 a `CallableResolver`.
 
@@ -580,7 +581,7 @@ a `CallableResolver`.
 
 namespace App;
 
-use Ellipse\Stack\MiddlewareStack;
+use Ellipse\Dispatcher\Dispatcher;
 
 $callable1 = function ($request, $delegate) {
 
@@ -594,9 +595,9 @@ $callable2 = function ($request, $delegate) {
 
 };
 
-// Create a stack with no resolver.
-$stack = new MiddlewareStack;
+// Create a dispatcher with no resolver.
+$dispatcher = new Dispatcher;
 
 // This works by default.
-$response = $stack->withElement([$callable1, $callable2])->dispatch($request);
+$response = $dispatcher->withElement([$callable1, $callable2])->dispatch($request);
 ```

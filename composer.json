@@ -1,18 +1,17 @@
 {
-    "name": "ellipse/stack",
+    "name": "ellipse/dispatcher",
     "type": "library",
-    "description": "The PSR15 middleware stack dispatcher component of the ellipse framework",
+    "description": "The PSR15 middleware dispatcher component of the ellipse framework",
     "keywords": [
         "psr-15",
         "middleware",
-        "dispatcher",
-        "stack"
+        "dispatcher"
     ],
     "license": "MIT",
-    "homepage": "https://github.com/ellipsephp/stack",
+    "homepage": "https://github.com/ellipsephp/dispatcher",
     "support": {
-        "issues": "https://github.com/ellipsephp/stack/issues",
-        "source": "https://github.com/ellipsephp/stack"
+        "issues": "https://github.com/ellipsephp/dispatcher/issues",
+        "source": "https://github.com/ellipsephp/dispatcher"
     },
     "authors": [
         {
@@ -24,7 +23,7 @@
         "php": ">=7.1",
         "psr/http-message": "^1.0",
         "http-interop/http-middleware": "^0.4.0",
-        "ellipse/contracts-stack": "^1.0",
+        "ellipse/contracts-dispatcher": "^1.0",
         "ellipse/contracts-resolver": "^1.0",
         "ellipse/resolvers-recursive": "^1.0",
         "ellipse/resolvers-callable": "^1.0"
@@ -36,7 +35,7 @@
     },
     "autoload": {
         "psr-4": {
-            "Ellipse\\Stack\\": "src"
+            "Ellipse\\Dispatcher\\": "src"
         }
     },
     "extra": {

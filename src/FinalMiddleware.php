@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace Ellipse\Stack;
+namespace Ellipse\Dispatcher;
 
 use Psr\Http\Message\ServerRequestInterface;
 

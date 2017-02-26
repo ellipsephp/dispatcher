@@ -3,7 +3,7 @@
 use Ellipse\Resolvers\RecursiveResolver;
 use Ellipse\Resolvers\CallableWrapper;
 
-use Ellipse\Stack\DefaultResolver;
+use Ellipse\Dispatcher\DefaultResolver;
 
 describe('DefaultResolver', function () {
 

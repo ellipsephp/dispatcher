@@ -6,8 +6,8 @@ use Psr\Http\Message\ResponseInterface;
 use Interop\Http\ServerMiddleware\MiddlewareInterface;
 use Interop\Http\ServerMiddleware\DelegateInterface;
 
-use Ellipse\Stack\FinalMiddleware;
-use Ellipse\Stack\FinalDelegate;
+use Ellipse\Dispatcher\FinalMiddleware;
+use Ellipse\Dispatcher\FinalDelegate;
 
 describe('FinalMiddleware', function () {
 

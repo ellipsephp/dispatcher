@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace Ellipse\Stack;
+namespace Ellipse\Dispatcher;
 
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -8,7 +8,7 @@ use Psr\Http\Message\ResponseInterface;
 use Interop\Http\ServerMiddleware\MiddlewareInterface;
 use Interop\Http\ServerMiddleware\DelegateInterface;
 
-use Ellipse\Contracts\Stack\Exceptions\InvalidMiddlewareReturnValueException;
+use Ellipse\Contracts\Dispatcher\Exceptions\InvalidMiddlewareReturnValueException;
 
 class Delegate implements DelegateInterface
 {

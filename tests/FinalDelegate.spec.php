@@ -4,8 +4,8 @@ use Psr\Http\Message\ServerRequestInterface;
 
 use Interop\Http\ServerMiddleware\DelegateInterface;
 
-use Ellipse\Stack\FinalDelegate;
-use Ellipse\Contracts\Stack\Exceptions\NoResponseReturnedException;
+use Ellipse\Dispatcher\FinalDelegate;
+use Ellipse\Contracts\Dispatcher\Exceptions\NoResponseReturnedException;
 
 describe('FinalDelegate', function () {
 

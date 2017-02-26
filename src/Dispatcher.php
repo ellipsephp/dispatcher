@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace Ellipse\Stack;
+namespace Ellipse\Dispatcher;
 
 use Traversable;
 
@@ -10,10 +10,10 @@ use Psr\Http\Message\ResponseInterface;
 use Interop\Http\ServerMiddleware\MiddlewareInterface;
 use Interop\Http\ServerMiddleware\DelegateInterface;
 
-use Ellipse\Contracts\Stack\MiddlewareStackInterface;
+use Ellipse\Contracts\Dispatcher\DispatcherInterface;
 use Ellipse\Contracts\Resolver\ResolverInterface;
 
-class MiddlewareStack implements MiddlewareStackInterface
+class Dispatcher implements DispatcherInterface
 {
     /**
      * The resolver used to get middleware from the elements composing the
@@ -31,8 +31,8 @@ class MiddlewareStack implements MiddlewareStackInterface
     private $elements = [];
 
     /**
-     * Sets up a middleware stack with an optional resolver and an optional
-     * elements list.
+     * Sets up a dispatcher with an optional resolver and an optional elements
+     * list.
      *
      * @param iterable $elements
      */
@@ -49,46 +49,46 @@ class MiddlewareStack implements MiddlewareStackInterface
      * Shortcut for withMiddleware.
      *
      * @param mixed $element
-     * @return \Ellipse\Contracts\Stack\MiddlewareStackInterface
+     * @return \Ellipse\Contracts\Dispatcher\DispatcherInterface
      */
-    public function with($element): MiddlewareStackInterface
+    public function with($element): DispatcherInterface
     {
         return $this->withElement($element);
     }
 
     /**
-     * Return a new middleware stack containing the given middleware.
+     * Return a new dispatcher containing the given middleware.
      *
      * @param \Interop\Http\ServerMiddleware\MiddlewareInterface $middleware
-     * @return \Ellipse\Contracts\Stack\MiddlewareStackInterface
+     * @return \Ellipse\Contracts\Dispatcher\DispatcherInterface
     */
-    public function withMiddleware(MiddlewareInterface $middleware): MiddlewareStackInterface
+    public function withMiddleware(MiddlewareInterface $middleware): DispatcherInterface
     {
         return $this->withElement($middleware);
     }
 
     /**
-     * Return a new middleware stack containing the given element.
+     * Return a new dispatcher containing the given element.
      *
      * @param mixed $element
-     * @return \Ellipse\Contracts\Stack\MiddlewareStackInterface
+     * @return \Ellipse\Contracts\Dispatcher\DispatcherInterface
     */
-    public function withElement($element): MiddlewareStackInterface
+    public function withElement($element): DispatcherInterface
     {
         $elements = array_merge($this->elements, [$element]);
 
-        return new MiddlewareStack($this->resolver, $elements);
+        return new Dispatcher($this->resolver, $elements);
     }
 
     /**
-     * Return a new stack using the given resolver.
+     * Return a new dispatcher using the given resolver.
      *
      * @param \Ellipse\Contracts\Resolver\ResolverInterface $resolver
-     * @return \Ellipse\Contracts\Stack\MiddlewareStackInterface
+     * @return \Ellipse\Contracts\Dispatcher\DispatcherInterface
      */
-    public function withResolver(ResolverInterface $resolver): MiddlewareStackInterface
+    public function withResolver(ResolverInterface $resolver): DispatcherInterface
     {
-        return new MiddlewareStack($resolver, $this->elements);
+        return new Dispatcher($resolver, $this->elements);
     }
 
     /**
@@ -128,7 +128,7 @@ class MiddlewareStack implements MiddlewareStackInterface
     }
 
     /**
-     * Run the middleware stack as one middleware.
+     * Run the dispatcher as one middleware.
      *
      * @param \Psr\Http\Message\ServerRequestInterface  $request
      * @param \Psr\Http\Message\DelegateInterface       $delegate
