@@ -363,11 +363,11 @@ use App\Middleware\SomeMiddleware;
 // interop's ServiceProvider.
 $container = new SomeContainer;
 
-// Add the service provider to the container.
-$container->addServiceProvider(new ContainerResolverServiceProvider);
+// Register the service provider to the container.
+$container->register(new ContainerResolverServiceProvider);
 
 // Register some middleware into the container.
-$container->share(SomeMiddleware::class);
+$container->set(SomeMiddleware::class);
 
 // Get a container resolver instance from the container.
 $resolver = $container->get(ContainerResolver::class);
@@ -389,24 +389,20 @@ way to use actions as middleware. Actions are strings formatted this way:
 `'ClassName@MethodName'`. Many things to note:
 
 * Action strings must contain the class name and the method to use separated by
-  @. For example `UsersController@index` will retrieve an instance of
-  `UsersController` from the container and will call its index method through
-  the container as well.
-* This resolver expects the same kind of container as `ContainerResolver`.
-  However right now it also expects the container to have a `call` method
-  allowing to call class methods through the container. This is subject to be
-  simplified in future versions.
+  @. For example `UsersController@index`.
+* When the action's class is instantiated all its constructor parameters are
+  retrieved from the container based on their type hints. One exception: when
+  there is a parameter type hinted as `Psr\Http\Message\ServerRequestInterface`,
+  the request currently processed by the middleware is injected.
+* When the action's method is executed, all its parameters are also
+  retrieved from the container based on their type hints.
+  `Psr\Http\Message\ServerRequestInterface` are injected the same way as for
+  action's class constructor. For non type-hinted parameters, request attributes
+  values are injected, based on their name then on their order.
 * Actions are expected to return a response as no delegate will be passed to
   the class method.
 * If a `'resolvers.action.controllers_namespace'` alias is registered in the
   container, its value will be prepended to all action's classes name.
-* The produced action middleware register the request into the container when it
-  process the request before calling the action, so it can be injected in the
-  action's class constructor or in the action's method.
-* Request attributes are used when calling the class method through the
-  container. Actions takes their full power when used with the Ellipse router
-  which will (hopefully) be released soon. This will allow to pass matched url
-  values to the action.
 
 ```php
 <?php
@@ -453,14 +449,11 @@ use App\Controllers\SomeController;
 // interop's ServiceProvider.
 $container = new SomeContainer;
 
-// Add the service provider to the container.
-$container->addServiceProvider(new ActionResolverServiceProvider);
-
-// Register some controller class into the container.
-$container->share(SomeController::class);
+// Register the service provider to the container.
+$container->register(new ActionResolverServiceProvider);
 
 // Register the controllers namespace.
-$container->share('resolvers.action.controllers_namespace', 'App\Controllers');
+$container->set('resolvers.action.controllers_namespace', 'App\Controllers');
 
 // Get an action resolver instance from the container.
 $resolver = $container->get(ActionResolver::class);
@@ -470,7 +463,7 @@ $dispatcher = new Dispatcher($resolver, [
     'SomeController@index',
 ]);
 
-// The given request is processed by the index method of the SomeMiddleware
+// The given request is processed by the index method of the SomeController
 // class.
 $response = $dispatcher->dispatch($request);
 ```
@@ -545,9 +538,9 @@ $callable = function ($request, $delegate) {
 
 $container = new SomeContainer;
 
-$container->addServiceProvider(new ContainerResolverServiceProvider);
+$container->register(new ContainerResolverServiceProvider);
 
-$container->share(SomeMiddleware::class);
+$container->set(SomeMiddleware::class);
 
 // Create a CallableResolver and a ContainerResolver
 $callable_resolver = new CallableResolver;
