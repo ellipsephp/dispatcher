@@ -8,7 +8,7 @@ use Psr\Http\Message\ResponseInterface;
 use Interop\Http\ServerMiddleware\MiddlewareInterface;
 use Interop\Http\ServerMiddleware\DelegateInterface;
 
-use Ellipse\Contracts\Dispatcher\Exceptions\InvalidMiddlewareReturnValueException;
+use Ellipse\Dispatcher\Exceptions\InvalidMiddlewareReturnValueException;
 
 class Delegate implements DelegateInterface
 {

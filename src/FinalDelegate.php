@@ -6,7 +6,7 @@ use Psr\Http\Message\ServerRequestInterface;
 
 use Interop\Http\ServerMiddleware\DelegateInterface;
 
-use Ellipse\Contracts\Dispatcher\Exceptions\NoResponseReturnedException;
+use Ellipse\Dispatcher\Exceptions\NoResponseReturnedException;
 
 class FinalDelegate implements DelegateInterface
 {

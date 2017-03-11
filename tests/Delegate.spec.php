@@ -7,7 +7,7 @@ use Interop\Http\ServerMiddleware\MiddlewareInterface;
 use Interop\Http\ServerMiddleware\DelegateInterface;
 
 use Ellipse\Dispatcher\Delegate;
-use Ellipse\Contracts\Dispatcher\Exceptions\InvalidMiddlewareReturnValueException;
+use Ellipse\Dispatcher\Exceptions\InvalidMiddlewareReturnValueException;
 
 describe('Delegate', function () {
 

@@ -31,64 +31,36 @@ class Dispatcher implements DispatcherInterface
     private $elements = [];
 
     /**
-     * Sets up a dispatcher with an optional resolver and an optional elements
-     * list.
+     * Sets up a dispatcher with the given elements list and the given resolver.
      *
-     * @param iterable $elements
+     * @param iterable                                      $elements
+     * @param \Ellipse\Contracts\Resolver\ResolverInterface $resolver
      */
-    public function __construct(ResolverInterface $resolver = null, iterable $elements = [])
+    public function __construct(iterable $elements = [], ResolverInterface $resolver = null)
     {
-        $this->resolver = $resolver ?: new DefaultResolver;
-
         $this->elements = $elements instanceof Traversable
             ? iterator_to_array($elements)
             : $elements;
+
+        $this->resolver = $resolver ?: new VoidResolver;
     }
 
     /**
-     * Shortcut for withMiddleware.
-     *
-     * @param mixed $element
-     * @return \Ellipse\Contracts\Dispatcher\DispatcherInterface
+     * @{inheritdoc}
      */
     public function with($element): DispatcherInterface
     {
-        return $this->withElement($element);
-    }
-
-    /**
-     * Return a new dispatcher containing the given middleware.
-     *
-     * @param \Interop\Http\ServerMiddleware\MiddlewareInterface $middleware
-     * @return \Ellipse\Contracts\Dispatcher\DispatcherInterface
-    */
-    public function withMiddleware(MiddlewareInterface $middleware): DispatcherInterface
-    {
-        return $this->withElement($middleware);
-    }
-
-    /**
-     * Return a new dispatcher containing the given element.
-     *
-     * @param mixed $element
-     * @return \Ellipse\Contracts\Dispatcher\DispatcherInterface
-    */
-    public function withElement($element): DispatcherInterface
-    {
         $elements = array_merge($this->elements, [$element]);
 
-        return new Dispatcher($this->resolver, $elements);
+        return new Dispatcher($elements, $this->resolver);
     }
 
     /**
-     * Return a new dispatcher using the given resolver.
-     *
-     * @param \Ellipse\Contracts\Resolver\ResolverInterface $resolver
-     * @return \Ellipse\Contracts\Dispatcher\DispatcherInterface
+     * @{inheritdoc}
      */
     public function withResolver(ResolverInterface $resolver): DispatcherInterface
     {
-        return new Dispatcher($resolver, $this->elements);
+        return new Dispatcher($this->elements, $resolver);
     }
 
     /**
@@ -136,6 +108,6 @@ class Dispatcher implements DispatcherInterface
      */
     public function process(ServerRequestInterface $request, DelegateInterface $delegate)
     {
-        return $this->withMiddleware(new FinalMiddleware($delegate))->dispatch($request);
+        return $this->with(new FinalMiddleware($delegate))->dispatch($request);
     }
 }
