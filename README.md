@@ -9,21 +9,17 @@ The terms used in the following documentation:
 * *element* represents any value.
 
 This package provides a `Dispatcher` class which can be used to dispatch a
-request by returning the response produced by a list of middleware.
+request through a list of psr-15 middleware in order to produce a response.
 See [getting started](#getting-started).
 
-`Dispatcher` instances can be composed of middleware as well as any element
-as long as it can be resolved as a middleware by the resolver. See
-[pushing middleware](#pushing-middleware) and
-[pushing elements](#pushing-elements).
+Any element can be dispatched as long as they can be resolved as a middleware by
+the resolver used by the dispatcher. See [adding elements](#adding-elements).
 
-`Dispatcher` instances can use a custom resolver for resolving elements as
-middleware. Ellipse packages provide some useful resolvers but any object can
-be used as a resolver as long as it implements the
-`Ellipse\Contracts\Resolver\ResolverInterface` from the
-`ellipse/contracts-resolver` package. Also, many resolvers can be aggregated by
-one using the `ResolverAggregate` class from the `ellipse/resolvers-aggregate`
-package. See [resolvers](#resolvers).
+Ellipse packages provide some useful resolvers but any object can be used as a
+resolver as long as it implements the interface `Ellipse\Contracts\Resolver\ResolverInterface`
+from the [ellipse/contracts-resolver](https://github.com/ellipsephp/contracts-resolver)
+package. Many resolvers can be chained so they can be used together.
+See [resolvers](#resolvers).
 
 Please note that Psr-15 specification is not yet official and may be subject to
 changes.
@@ -35,8 +31,8 @@ changes.
 **Run tests** `./vendor/bin/peridot tests`
 
 * [Getting started](#getting-started)
-* [Pushing middleware](#pushing-middleware)
-* [Pushing elements](#pushing-elements)
+* [Adding elements](#adding-elements)
+* [Dispatcher interface](#dispatcher-interface)
 * [Resolvers](#resolvers)
     * [Resolver interface](#resolver-interface)
     * [Abstract resolver](#abstract-resolver)
@@ -44,14 +40,14 @@ changes.
     * [Container resolver](#container-resolver)
     * [Action resolver](#action-resolver)
     * [Recursive resolver](#recursive-resolver)
-    * [Resolver aggregate](#resolver-aggregate)
-    * [Default resolver](#default-resolver)
+    * [Using multiple resolvers](#using-multiple-resolvers)
 
 ## Getting started
-A dispatcher can be instantiated with an optional resolver and an optional
-list of elements to push into the stack. The elements list can either be an
-array or a `Traversable` instance. An element can be either a middleware or
-anything that can be resolved as a middleware by the given resolver.
+A dispatcher can be instantiated with an optional list of elements to dispatch
+and an optional resolver to use. The elements list can either be an array or a
+`Traversable` instance. An element can be either a middleware instance or
+anything that can be resolved as a middleware by the given resolver. When no
+resolver is specified, only middleware can be dispatched.
 
 ```php
 <?php
@@ -63,27 +59,30 @@ use Ellipse\Dispatcher\Dispatcher;
 // Can be instantiated without anything.
 $dispatcher = new Dispatcher;
 
-// Can be instantiated with an object implementing ResolverInterface.
-$dispatcher = new Dispatcher($resolver);
-
-// A list of middleware can also be given on instantiation.
-$dispatcher = new Dispatcher($resolver, [
+// A list of elements to dispatch can be given on instantiation.
+$dispatcher = new Dispatcher([
     $middleware1,
     $middleware2,
     $middleware3,
 ]);
 
-// The list of middleware can be a Traversable instance containing the list of
-// middleware.
-$dispatcher = new Dispatcher($resolver, new \ArrayObject([
+// A Traversable instance is ok as well.
+$dispatcher = new Dispatcher(new \ArrayObject([
     $middleware1,
     $middleware2,
     $middleware3,
 ]));
+
+// A revolver may aslo be given on instantiation.
+$dispatcher = new Dispatcher([
+    $middleware1,
+    $middleware2,
+    $middleware3,
+], new SomeResolver);
 ```
 
 Once the `Dispatcher` is built it can dispatch requests and return the response
-produced by the list of middleware composing the stack.
+produced by the given list of elements.
 
 ```php
 <?php
@@ -92,7 +91,7 @@ namespace App;
 
 use Ellipse\Dispatcher\Dispatcher;
 
-$dispatcher = new Dispatcher($resolver, [
+$dispatcher = new Dispatcher([
     $middleware1,
     $middleware2,
     $middleware3,
@@ -102,8 +101,8 @@ $dispatcher = new Dispatcher($resolver, [
 $response = $dispatcher->dispatch($request);
 ```
 
-Please also note `Dispatcher` class implements Psr-15 `MiddlewareInterface`
-so instances of `Dispatcher` can be pushed into another instance of
+Please also note `Dispatcher` class implements Psr-15 `MiddlewareInterface` as
+well so instances of `Dispatcher` can be pushed into another instance of
 `Dispatcher`, or into any other Psr-15 middleware dispatcher.
 
 ```php
@@ -114,14 +113,14 @@ namespace App;
 use Ellipse\Dispatcher\Dispatcher;
 
 // This is a Psr-15 middleware.
-$dispatcher1 = new Dispatcher($resolver, [
+$dispatcher1 = new Dispatcher([
     $middleware1,
     $middleware2,
     $middleware3,
 ]);
 
 // It can be pushed into another middleware dispatcher.
-$dispatcher2 = new Dispatcher($resolver, [
+$dispatcher2 = new Dispatcher([
     $dispatcher1,
     $middleware4,
     $middleware5
@@ -132,9 +131,9 @@ $dispatcher2 = new Dispatcher($resolver, [
 $response = $dispatcher2->dispatch($request);
 ```
 
-## Pushing middleware
-Middleware are pushed into the stack using the `withMiddleware` method. No
-resolver is needed to dispatch middleware.
+## Adding elements
+Middleware can be added to the dispatcher after its instantiation using the
+`with` method.
 
 ```php
 <?php
@@ -143,12 +142,11 @@ namespace App;
 
 use Ellipse\Dispatcher\Dispatcher;
 
-$dispatcher = (new Dispatcher)->withMiddleware($middleware);
+$dispatcher = (new Dispatcher)->with($middleware);
 ```
 
-Note `Dispatcher` instances are immutable, so calling `withMiddleware`
-method returns a new `Dispatcher` instance leaving the calling
-`Dispatcher` instance unmodified.
+Note `Dispatcher` instances are immutable, so calling `with` method returns a
+new `Dispatcher` instance leaving the calling `Dispatcher` instance unmodified.
 
 ```php
 <?php
@@ -157,12 +155,12 @@ namespace App;
 
 use Ellipse\Dispatcher\Dispatcher;
 
-$dispatcher1 = new Dispatcher($resolver, [
+$dispatcher1 = new Dispatcher([
     $middleware1,
     $middleware2,
 ]);
 
-$dispatcher2 = $dispatcher1->withMiddleware($middleware3);
+$dispatcher2 = $dispatcher1->with($middleware3);
 
 // Get the response produced by $middleware1, and 2 for the given request.
 $response = $dispatcher1->dispatch($request);
@@ -171,17 +169,8 @@ $response = $dispatcher1->dispatch($request);
 $response = $dispatcher2->dispatch($request);
 ```
 
-## Pushing elements
-Anything can be pushed in `Dispatcher` instances as long as the resolver
-can resolve it as a middleware. If the resolver is not able to resolve an
-element, an `ElementCantBeResolvedException` is thrown.
-
-When no resolver is specified on `Dispatcher` instantiation, a
-`DefaultResolver` instance is used by default. This resolver can resolve
-callable elements and list of callable elements. See
-[default resolver](#default-resolver).
-
-Elements are pushed into the stack using the `withElement` method :
+Any element can be added to the dispatcher as long as it can be resolved to a
+middleware by the given resolver.
 
 ```php
 <?php
@@ -190,15 +179,31 @@ namespace App;
 
 use Ellipse\Dispatcher\Dispatcher;
 
-$dispatcher = (new Dispatcher($resolver))->withElement($element);
+$dispatcher = new Dispatcher([
+    $element1,
+    $element2,
+], new SomeResolver);
+
+$dispatcher = $dispatcher->with($element3);
+
+// Resolve element1, 2 and 3 to middleware and get the response they produce.
+$response = $dispatcher->dispatch($request);
 ```
 
-Note `Dispatcher` instances are immutable, so calling `withElement`
-method returns a new `Dispatcher` instance leaving the calling
-`Dispatcher` instance unmodified.
+## Dispatcher interface
+`Dispatcher` instances implements the interface `Ellipse\Contracts\Dispatcher\DispatcherInterface`
+provided by the [ellipse/contracts-dispatcher](https://github.com/ellipsephp/contracts-dispatcher)
+package.
 
-Also note pushing middleware using the `withElement` method is the same as using
-the `withMiddleware` method.
+This interface is not intended to be implemented by other dispatcher. Its
+purpose is just to be a contract for packages using ellipse dispatcher.
+
+For example, it allows resolver packages to provides an implementation of `DispatcherInterface`
+using the resolver provided by their service providers. See
+[callable resolver](#callable-resolver),
+[container resolver](#container-resolver),
+[action resolver](#action-resolver) and
+[recursive resolver](#recursive-resolver).
 
 ## Resolvers
 * [Resolver interface](#resolver-interface)
@@ -207,33 +212,53 @@ the `withMiddleware` method.
 * [Container resolver](#container-resolver)
 * [Action resolver](#action-resolver)
 * [Recursive resolver](#recursive-resolver)
-* [Resolver aggregate](#resolver-aggregate)
-* [Default resolver](#default-resolver)
+* [Using multiple resolvers](#using-multiple-resolvers)
 
 ### Resolver interface
 A resolver usable by `Dispatcher` instances is any object implementing
 `Ellipse\Contracts\Resolver\ResolverInterface` from the
-`ellipse/contracts-resolver` package.
+[ellipse/contracts-resolver](https://github.com/ellipsephp/contracts-resolver)
+package.
 
-The only method defined by `ResolverInterface` is the `resolve` method, taking
-one value of any type as parameter, and returning a middleware. When the element
-can't be resolved,
-`Ellipse\Contracts\Resolver\Exception\ElementCantBeResolvedException` must be
-thrown.
+`ResolverInterface` use the chain of responsibility pattern so many resolvers
+can be chained. It define two methods:
+
+* `->resolve($element): MiddlewareInterface`: it takes a value of any type as
+  parameter and return a Psr-15 middleware when it is possible. Otherwise it
+  should call and return the value produced by it's delegate resolver. When no
+  delegate resolver is specified, it should throw an exception implementing
+  `Ellipse\Contracts\Resolver\Exception\ElementCantBeResolvedExceptionInterface`.
+* `->withDelegate(ResolverInterface $delegate): ResolverInterface`: it takes
+  another resolver as parameter and should return a new resolver using the given
+  resolver as delegate.
 
 ```php
 <?php
 
 namespace App\Resolvers;
 
+use RuntimeException;
+
 use Interop\Http\ServerMiddleware\MiddlewareInterface;
 
 use Ellipse\Contracts\Resolver\ResolverInterface;
-use Ellipse\Contracts\Resolver\Exceptions\ElementCantBeResolvedException;
+use Ellipse\Contracts\Resolver\Exceptions\ElementCantBeResolvedExceptionInterface;
+
+class ElementCantBeResolvedException extends RuntimeException implements ElementCantBeResolvedExceptionInterface
+{
+    //
+}
 
 class MyResolver implements ResolverInterface
 {
-    public function resolver($element): MiddlewareInterface
+    private $delegate;
+
+    public function __construct(ResolverInterface $delegate)
+    {
+        $this->delegate = $delegate;
+    }
+
+    public function resolve($element): MiddlewareInterface
     {
         if ($this->canResolve($element)) {
 
@@ -241,7 +266,18 @@ class MyResolver implements ResolverInterface
 
         }
 
+        if (! is_null($this->delegate)) {
+
+            return $this->delegate->resolve($element);
+
+        }
+
         throw new ElementCantBeResolvedException($element);
+    }
+
+    public function withDelegate(ResolverInterface $delegate): ResolverInterface
+    {
+        return new MyResolver($delegate);
     }
 
     private function canResolve($element): bool
@@ -258,16 +294,11 @@ class MyResolver implements ResolverInterface
 Please note:
 
 * In order to abstract this process, an `AbstractResolver` class is available
-  from the `ellipse/resolvers-abstract` package. See
-  [abstract resolver](#abstract-resolver).
-
+  from the [ellipse/resolvers-abstract](https://github.com/ellipsephp/resolvers-abstract)
+  package. See [abstract resolver](#abstract-resolver).
 * The recommended way of resolving many element types is to create one resolver
-  for each single type of element and then to aggregate those resolvers using
-  `ResolverAggregate`. See [resolver aggregate](#resolver-aggregate).
-
-* When no resolver is specified on `Dispatcher` instantiation, an instance of
-  `DefaultResolver` is used by default. See [default resolver](#default-resolver).
-
+  for each single type of element and then to chain them together using the
+  `withDelegate` method.
 * Some useful resolvers are provided by Ellipse packages, see
   [callable resolver](#callable-resolver),
   [container resolver](#container-resolver),
@@ -276,9 +307,9 @@ Please note:
 
 ### Abstract resolver
 To ease the creation of resolver classes, an `AbstractResolver` class is
-provided by the `ellipse/resolvers-abstract` package. Two method must be defined
-when extending `AbstractResolver`, the `canResolve` method and the
-`getMiddleware` method.
+provided by the [ellipse/resolvers-abstract](https://github.com/ellipsephp/resolvers-abstract)
+package. Just two method must be defined when extending `AbstractResolver`, the
+`canResolve` method and the `getMiddleware` method.
 
 ```php
 <?php
@@ -304,105 +335,203 @@ class MyResolver extends AbstractResolver
 ```
 
 ### Callable resolver
-Any callable value can be resolved as middleware using the `CallableResolver`
-class provided by the `ellpise/resolver-callable` package. In order to work
-properly those callable values must take a $request and a $delegate as parameter
-and return a response.
+The package [ellipse/resolvers-callable](https://github.com/ellipsephp/resolvers-callable)
+contains a service provider named `CallableResolverServiceProvider` which
+provides three implementations:
+
+* one implementation of `CallableResolver`.
+* one implementation of `ResolverInterface` with a `CallableResolver` added at
+  the end of the chain.
+* one implementation of `DispatcherInterface` using this resolver.
+
+The `CallableResolver` class allows to resolve any callable as a middleware. In
+order to work properly those callable values should take a `$request` and a
+`$delegate` parameter and return a response.
+
+`CallableResolverServiceProvider` implements [interop service provider](https://github.com/container-interop/container-interop)
+so it should be used with containers that can handle them. For example [simplex](https://github.com/mnapoli/simplex).
 
 ```php
 <?php
 
 namespace App;
 
+use Ellipse\Contracts\Resolver\ResolverInterface;
+
+use Ellipse\Resolvers\CallableResolverServiceProvider;
+
 use Ellipse\Dispatcher\Dispatcher;
-use Ellipse\Resolvers\CallableResolver;
 
-// Create a callable behaving like a middleware.
-$some_callable = function ($request, $delegate) {
+// Some container capable of handling interop service provider.
+$container = new SomeContainer;
 
-    // ... returns a response
+// Register the service provider.
+$container->register(CallableResolverServiceProvider::class);
 
-};
+// Now a resolver using callable resolver is available.
+$resolver = $container->get(ResolverInterface::class);
 
-$resolver = new CallableResolver;
+// Callable elements can now be dispatched using this resolver.
+$some_callable = function ($request, $delegate) { // ... returns a response };
 
-// Create a dispatcher using this resolver and containing the callable.
-$dispatcher = new Dispatcher($resolver, [
-    $some_callable
-]);
+$dispatcher = new Dispatcher([$some_callable], $resolver);
+
+// The given request is processed by $some_callable.
+$response = $dispatcher->dispatch($request);
+```
+
+`DispatcherInterface` implementation can also be used directly:
+
+```php
+<?php
+
+namespace App;
+
+use Ellipse\Contracts\Dispatcher\DispatcherInterface;
+
+use Ellipse\Resolvers\CallableResolverServiceProvider;
+
+// Some container capable of handling interop service provider.
+$container = new SomeContainer;
+
+// Register the service provider.
+$container->register(CallableResolverServiceProvider::class);
+
+// Now a dispatcher using callable resolver is available.
+$some_callable = function ($request, $delegate) { // ... returns a response };
+
+$dispatcher = $container->get(DispatcherInterface::class)->with($some_callable);
 
 // The given request is processed by $some_callable.
 $response = $dispatcher->dispatch($request);
 ```
 
 ### Container resolver
+The package [ellipse/resolvers-container](https://github.com/ellipsephp/resolvers-container)
+contains a service provider named `ContainerResolverServiceProvider` which
+provides three implementations:
+
+* one implementation of `ContainerResolver`.
+* one implementation of `ResolverInterface` with a `ContainerResolver` added at
+  the end of the chain.
+* one implementation of `DispatcherInterface` using this resolver.
+
 Sometimes it is useful to retrieve middleware from the application container
 instead of pushing an actual instance of the middleware. This can easily be
-achieved using the `ContainerResolver` class from the
-`ellipse/resolvers-container` package.
+achieved using the `ContainerResolver`.
 
-This resolver expects the container to implements `ContainerInterface` from the
-[container interop specification](https://github.com/container-interop/container-interop).
-Also it provides a service provider implementing the
-[service provider interop specification](https://github.com/container-interop/service-provider),
-so your application container should be able to deal with it.
+`ContainerResolverServiceProvider` implements [interop service provider](https://github.com/container-interop/container-interop)
+so it should be used with containers that can handle them. For example [simplex](https://github.com/mnapoli/simplex).
 
 ```php
 <?php
 
 namespace App;
 
-use Ellipse\Dispatcher\Dispatcher;
-use Ellipse\Resolvers\ContainerResolverServiceProvider;
-use Ellipse\Resolvers\ContainerResolver;
+use Ellipse\Contracts\Resolver\ResolverInterface;
 
-// Some middleware instance.
+use Ellipse\Resolvers\ContainerResolverServiceProvider;
+
+use Ellipse\Dispatcher\Dispatcher;
+
 use App\Middleware\SomeMiddleware;
 
-// Some container implementing interop's ContainerInterface and able to handle
-// interop's ServiceProvider.
+// Some container capable of handling interop service provider.
 $container = new SomeContainer;
 
-// Register the service provider to the container.
-$container->register(new ContainerResolverServiceProvider);
+// Register the service provider.
+$container->register(ContainerResolverServiceProvider::class);
 
-// Register some middleware into the container.
-$container->set(SomeMiddleware::class);
+// Now a resolver using container resolver is available.
+$resolver = $container->get(ResolverInterface::class);
 
-// Get a container resolver instance from the container.
-$resolver = $container->get(ContainerResolver::class);
+// Middleware class names registered in the container can now be dispatched
+// using this resolver.
+$container->set(SomeMiddleware::class, function () {
 
-// Create a dispatcher using this resolver and containing the middleware class
-// name in the elements list.
-$dispatcher = new Dispatcher($resolver, [
-    SomeMiddleware::class,
-]);
+    // return an implementation of SomeMiddleware
+    return new SomeMiddleware(...);
 
-// The given request is processed by an instance of SomeMiddleware retrieved
-// from the container.
+});
+
+$dispatcher = new Dispatcher([SomeMiddleware::class], $resolver);
+
+// The given request is processed by SomeMiddleware.
+$response = $dispatcher->dispatch($request);
+```
+
+`DispatcherInterface` implementation can also be used directly:
+
+```php
+<?php
+
+namespace App;
+
+use Ellipse\Contracts\Dispatcher\DispatcherInterface;
+
+use Ellipse\Resolvers\ContainerResolverServiceProvider;
+
+use App\Middleware\SomeMiddleware;
+
+// Some container capable of handling interop service provider.
+$container = new SomeContainer;
+
+// Now a dispatcher using container resolver is available.
+$container->set(SomeMiddleware::class, function () {
+
+    // return an implementation of SomeMiddleware
+    return new SomeMiddleware(...);
+
+});
+
+$dispatcher = $container->get(DispatcherInterface::class)
+    ->with(SomeMiddleware::class);
+
+// The given request is processed by SomeMiddleware.
 $response = $dispatcher->dispatch($request);
 ```
 
 ### Action resolver
-The `ActionResolver` class from the `ellipse/resolvers-action` provides an easy
-way to use actions as middleware. Actions are strings formatted this way:
-`'ClassName@MethodName'`. Many things to note:
+The package [ellipse/resolvers-action](https://github.com/ellipsephp/resolvers-action)
+contains a service provider named `ActionResolverServiceProvider` which provides
+three implementations:
 
-* Action strings must contain the class name and the method to use separated by
-  @. For example `UsersController@index`.
-* When the action's class is instantiated all its constructor parameters are
+* one implementation of `ActionResolver`.
+* one implementation of `ResolverInterface` with an `ActionResolver` added at
+  the end of the chain.
+* one implementation of `DispatcherInterface` using this resolver.
+
+The `ActionResolver` class provides an easy way to use actions as middleware.
+Actions are instances of `Ellipse\Resolvers\Action` which takes two parameters
+on instantiation:
+
+* A formatted string containing the action's class name and method to execute
+  separated by @. Ex: `'\App\Controllers\SomeController@index'`.
+* An optional array of parameters to use when executing the action. Usually it
+  is values matching some url pattern.
+
+Many things to note:
+
+* When the action is processed as a middleware, an implementation of the
+  action's class is retrieved from the container if it contains it. Otherwise
+  when the action's class is instantiated all its constructor parameters are
   retrieved from the container based on their type hints. One exception: when
   there is a parameter type hinted as `Psr\Http\Message\ServerRequestInterface`,
-  the request currently processed by the middleware is injected.
-* When the action's method is executed, all its parameters are also
-  retrieved from the container based on their type hints.
-  `Psr\Http\Message\ServerRequestInterface` are injected the same way as for
-  action's class constructor. For non type-hinted parameters, request attributes
-  values are injected, based on their name then on their order.
+  the request currently processed by the middleware is injected. The action's
+  parameters are also injected for parameters without a class type hint, firstly
+  matching the parameter names with the action's parameters array keys, then by
+  their order.
+* When the action's method is executed, all its parameters values are injected
+  the same way as for the action's class constructor described above.
 * Actions are expected to return a response as no delegate will be passed to
   the class method.
-* If a `'resolvers.action.controllers_namespace'` alias is registered in the
-  container, its value will be prepended to all action's classes name.
+* When a `'resolvers.action.controllers_namespace'` alias is registered in the
+  container, its value will be prepended to all action's class names.
+* `ActionResolver` gets it's full power when used with the ellipse router which
+  will hopefully  be released soon.
+
+`ActionResolverServiceProvider` implements [interop service provider](https://github.com/container-interop/container-interop)
+so it should be used with containers that can handle them. For example [simplex](https://github.com/mnapoli/simplex).
 
 ```php
 <?php
@@ -419,16 +548,20 @@ class SomeController
 
     public function __construct(SomeService $some_service, ResponseFactory $response_factory)
     {
+        // Those values are retrieved from the container based on their class
+        // type hints.
         $this->some_service = $some_service;
         $this->response_factory = $response_factory
     }
 
     public function index(ServerRequestInterface $request)
     {
-        // some processing
+        // $request is the request available at the time the middleware is being
+        // processed.
 
-        // ...
+        // some processing ...
 
+        // returns a response.
         return $this->response_factory->createResponse();
     }
 }
@@ -439,158 +572,237 @@ class SomeController
 
 namespace App;
 
-use Ellipse\Dispatcher\Dispatcher;
+use Ellipse\Contracts\Resolver\ResolverInterface;
+
 use Ellipse\Resolvers\ActionResolverServiceProvider;
-use Ellipse\Resolvers\ActionResolver;
+use Ellipse\Resolvers\Action;
+
+use Ellipse\Dispatcher\Dispatcher;
 
 use App\Controllers\SomeController;
 
-// Some container implementing interop's ContainerInterface and able to handle
-// interop's ServiceProvider.
+// Some container capable of handling interop service provider.
 $container = new SomeContainer;
 
-// Register the service provider to the container.
-$container->register(new ActionResolverServiceProvider);
+// Register the service provider.
+$container->register(ActionResolverServiceProvider::class);
 
-// Register the controllers namespace.
-$container->set('resolvers.action.controllers_namespace', 'App\Controllers');
+// Register some base controllers namespace.
+$container->set('resolvers.action.controllers_namespace', '\App\Controllers');
 
-// Get an action resolver instance from the container.
-$resolver = $container->get(ActionResolver::class);
+// Now a resolver using action resolver is available.
+$resolver = $container->get(ResolverInterface::class);
 
-// Create a dispatcher using this resolver and containing an action string.
-$dispatcher = new Dispatcher($resolver, [
-    'SomeController@index',
-]);
+// Action instances can now be dispatched using this resolver.
+$dispatcher = new Dispatcher([
+    new Action('SomeController@index'),
+], $resolver);
 
-// The given request is processed by the index method of the SomeController
-// class.
+// The given request is processed by SomeController's index method.
+$response = $dispatcher->dispatch($request);
+```
+
+`DispatcherInterface` implementation can also be used directly:
+
+```php
+<?php
+
+namespace App;
+
+use Ellipse\Contracts\Dispatcher\DispatcherInterface;
+
+use Ellipse\Resolvers\ActionResolverServiceProvider;
+use Ellipse\Resolvers\Action;
+
+use App\Controllers\SomeController;
+
+// Some container capable of handling interop service provider.
+$container = new SomeContainer;
+
+// Register the service provider.
+$container->register(ActionResolverServiceProvider::class);
+
+// Register some base controllers namespace.
+$container->set('resolvers.action.controllers_namespace', '\App\Controllers');
+
+// Now a dispatcher using action resolver is available.
+$dispatcher = $container->get(DispatcherInterface::class)
+    ->with(new Action('SomeController@index'));
+
+// The given request is processed by SomeController's index method.
 $response = $dispatcher->dispatch($request);
 ```
 
 ### Recursive resolver
-The `RecursiveResolver` class from the `ellipse/resolvers-recursive` package
-allows to resolve array of elements or `Traversable` instances containing
-elements added to the stack with the `withElement` method. It takes a resolver
-as parameter which is used to resolve elements in the list.
+The package [ellipse/resolvers-recursive](https://github.com/ellipsephp/resolvers-recursive)
+contains a service provider named `RecursiveResolverServiceProvider` which
+provides three implementations:
+
+* one implementation of `RecursiveResolver`.
+* one implementation of `ResolverInterface` with a `RecursiveResolver` added at
+  the beginning of the chain.
+* one implementation of `DispatcherInterface` using this resolver.
+
+The `RecursiveResolver` class allows to register either list of elements or
+`Traversable` instances containing elements.
+
+`RecursiveResolverServiceProvider` implements [interop service provider](https://github.com/container-interop/container-interop)
+so it should be used with containers that can handle them. For example [simplex](https://github.com/mnapoli/simplex).
+
+When used without the service provider, please note `RecursiveResolver` must be
+the first resolver in the chain of resolvers in order to work properly.
 
 ```php
 <?php
 
 namespace App;
 
+use Ellipse\Contracts\Resolver\ResolverInterface;
+
+use Ellipse\Resolvers\RecursiveResolverServiceProvider;
+
 use Ellipse\Dispatcher\Dispatcher;
-use Ellipse\Resolvers\RecursiveResolver;
-use Ellipse\Resolvers\CallableResolver;
 
-$callable1 = function ($request, $delegate) {
+use App\Middleware\SomeMiddleware1;
+use App\Middleware\SomeMiddleware2;
 
-    // ... returns a response
+// Some container capable of handling interop service provider.
+$container = new SomeContainer;
 
-};
+// Register the service provider.
+$container->register(RecursiveResolverServiceProvider::class);
 
-$callable2 = function ($request, $delegate) {
+// Now a resolver using recursive resolver is available.
+$resolver = $container->get(ResolverInterface::class);
 
-    // ... returns a response
-
-};
-
-// Create the recursive resolver wrapped around a callable resolver.
-$resolver = new RecursiveResolver(new CallableResolver);
-
-// Create a dispatcher using this resolver.
-$dispatcher = new Dispatcher($resolver);
-
-// Array of elements or Traversable instance of elements can be pushed into the
-// dispatcher.
-$dispatcher = $dispatcher->withElement([
-    $callable1,
-    $callable2,
+// List of elements can now be dispatched using this resolver.
+$dispatcher = (new Dispatcher([], $resolver))->with([
+    new SomeMiddleware1,
+    new SomeMiddleware2,
 ]);
 
-// The given request is processed by callable1 and 2.
+// The given request is processed by SomeMiddleware1 and SomeMiddleware2.
 $response = $dispatcher->dispatch($request);
 ```
 
-### Resolver aggregate
-The `ResolverAggregate` class from the `ellipse/resolvers-aggregate` package
-allows to use many resolvers at once. It takes this list of resolvers or a
-`Traversable` instance containing the resolvers on instantiation.
+`DispatcherInterface` implementation can also be used directly:
 
 ```php
 <?php
 
 namespace App;
 
-use Ellipse\Dispatcher\Dispatcher;
+use Ellipse\Contracts\Dispatcher\DispatcherInterface;
+
+use Ellipse\Resolvers\RecursiveResolverServiceProvider;
+
+use App\Middleware\SomeMiddleware1;
+use App\Middleware\SomeMiddleware2;
+
+// Some container capable of handling interop service provider.
+$container = new SomeContainer;
+
+// Register the service provider.
+$container->register(ResolverResolverServiceProvider::class);
+
+// Now a dispatcher using recursive resolver is available.
+$dispatcher = $container->get(DispatcherInterface::class)->with([
+    new SomeMiddleware1,
+    new SomeMiddleware2,
+]);
+
+// The given request is processed by SomeMiddleware1 and SomeMiddleware2.
+$response = $dispatcher->dispatch($request);
+```
+
+### Using multiple resolvers
+As mentioned above, the recommended way to use multiple resolvers it to chain
+them using their `->withDelegate()` method :
+
+```php
+<?php
+
+namespace App;
+
+use Ellipse\Resolvers\CallableResolverServiceProvider;
 use Ellipse\Resolvers\ContainerResolverServiceProvider;
-use Ellipse\Resolvers\ResolverAggregate;
-use Ellipse\Resolvers\CallableResolver;
-use Ellipse\Resolvers\ContainerResolver;
+
+use Ellipse\Dispatcher\Dispatcher;
 
 use App\Middleware\SomeMiddleware;
 
-$callable = function ($request, $delegate) {
-
-    // ... returns a response
-
-};
-
+// Some container capable of handling interop service provider.
 $container = new SomeContainer;
 
-$container->register(new ContainerResolverServiceProvider);
+// Register the service providers.
+$container->register(CallableResolverServiceProvider::class);
+$container->register(ContainerResolverServiceProvider::class);
 
-$container->set(SomeMiddleware::class);
-
-// Create a CallableResolver and a ContainerResolver
-$callable_resolver = new CallableResolver;
+// Now both resolvers are available.
+$callable_resolver = $container->get(CallableResolver::class);
 $container_resolver = $container->get(ContainerResolver::class);
 
-// Create the resolver aggregate, aggregating the callable resolver and
-// the container resolver.
-$resolver = new ResolverAggregate([
-    $callable_resolver,
-    $container_resolver,
-]);
+// They can be chained togerther.
+$resolver = $callable_resolver->withDelegate($container_resolver);
 
-// Create a dispatcher using this resolver and containing a callable and a
-// middleware class name.
-$dispatcher = new Dispatcher($resolver, [
-    $callable,
+// And used with a dispatcher.
+$some_callable = function ($request, $delegate) { // ... returns a response };
+
+$container->set(SomeMiddleware::class, function () {
+
+    // return an implementation of SomeMiddleware
+    return new SomeMiddleware(...);
+
+});
+
+$dispatcher = new Dispatcher([
+    $some_callable,
     SomeMiddleware::class,
-]);
+], $resolver);
 
-// The given request is processed by $callable and SomeMiddleware.
+// The given request is processed by $some_callable and SomeMiddleware.
 $response = $dispatcher->dispatch($request);
 ```
 
-### Default resolver
-When no resolver is specified on middleware stack instantiation, a
-`Defaultresolver` instance is used. It is just a `RecursiveResolver` wrapping
-a `CallableResolver`.
+Of course this works out of the box when retrieving `ResolverInterface` or
+`DispatcherInterface` from the container:
 
 ```php
 <?php
 
 namespace App;
 
-use Ellipse\Dispatcher\Dispatcher;
+use Ellipse\Contracts\Dispatcher\DispatcherInterface;
 
-$callable1 = function ($request, $delegate) {
+use Ellipse\Resolvers\CallableResolverServiceProvider;
+use Ellipse\Resolvers\ContainerResolverServiceProvider;
+use Ellipse\Resolvers\RecursiveResolverServiceProvider;
 
-    // ... returns a response
+use App\Middleware\SomeMiddleware;
 
-};
+// Some container capable of handling interop service provider.
+$container = new SomeContainer;
 
-$callable2 = function ($request, $delegate) {
+// Register the service providers.
+$container->register(CallableResolverServiceProvider::class);
+$container->register(ContainerResolverServiceProvider::class);
+$container->register(RecursiveResolverServiceProvider::class);
 
-    // ... returns a response
+// Now a dispatcher is available using the three resolvers.
+$some_callable = function ($request, $delegate) { // ... returns a response };
 
-};
+$container->set(SomeMiddleware::class, function () {
 
-// Create a dispatcher with no resolver.
-$dispatcher = new Dispatcher;
+    // return an implementation of SomeMiddleware
+    return new SomeMiddleware(...);
 
-// This works by default.
-$response = $dispatcher->withElement([$callable1, $callable2])->dispatch($request);
+});
+
+$dispatcher = $container->get(DispatcherInterface::class)->with([
+    $some_callable,
+    SomeMiddleware::class,
+]);
+
+// The given request is processed by $some_callable and SomeMiddleware.
+$response = $dispatcher->dispatch($request);
 ```
