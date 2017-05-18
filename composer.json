@@ -19,13 +19,15 @@
             "email": "pierre.mallinjoud@gmail.com"
         }
     ],
+    "minimum-stability": "dev",
+    "prefer-stable": true,
     "require": {
         "php": ">=7.1",
         "psr/http-message": "^1.0",
         "http-interop/http-middleware": "^0.4.0",
-        "ellipse/contracts-dispatcher": "^1.0",
-        "ellipse/contracts-resolver": "^1.0",
-        "ellipse/resolvers-abstract": "^1.0",
+        "ellipse/contracts-dispatcher": "dev-master",
+        "ellipse/contracts-resolver": "dev-master",
+        "ellipse/resolvers-abstract": "dev-master",
         "mindplay/readable": "^1.1"
     },
     "require-dev": {
