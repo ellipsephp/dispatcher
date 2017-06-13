@@ -21,6 +21,12 @@ describe('Delegate', function () {
 
     });
 
+    afterEach(function () {
+
+        Mockery::close();
+
+    });
+
     it('should implements DelegateInterface', function () {
 
         expect($this->delegate)->to->be->an->instanceof(DelegateInterface::class);
@@ -29,9 +35,9 @@ describe('Delegate', function () {
 
     describe('->process()', function () {
 
-        it('should return the value produced by the injected middleware', function () {
+        it('should proxy the process method of the underlying middleware', function () {
 
-            $this->middleware->shouldReceive('process')
+            $this->middleware->shouldReceive('process')->once()
                 ->with($this->request, $this->next)
                 ->andReturn($this->response);
 
@@ -43,17 +49,12 @@ describe('Delegate', function () {
 
         it('should fail when the injected middleware does not produce an instance of ResponseInterface', function () {
 
-            $this->middleware->shouldReceive('process')
+            $this->middleware->shouldReceive('process')->once()
                 ->with($this->request, $this->next)
                 ->andReturn('test');
 
-            $test = function ($request) {
-
-                $this->delegate->process($request);
-
-            };
-
-            expect($test)->with($this->request)->to->throw(InvalidMiddlewareReturnValueException::class);
+            expect([$this->delegate, 'process'])->with($this->request)
+                ->to->throw(InvalidMiddlewareReturnValueException::class);
 
         });
 

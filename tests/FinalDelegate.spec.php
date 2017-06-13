@@ -27,13 +27,8 @@ describe('FinalDelegate', function () {
 
             $request = Mockery::mock(ServerRequestInterface::class);
 
-            $test = function ($request) {
-
-                $this->delegate->process($request);
-
-            };
-
-            expect($test)->with($request)->to->throw(NoResponseReturnedException::class);
+            expect([$this->delegate, 'process'])->with($request)
+                ->to->throw(NoResponseReturnedException::class);
 
         });
 

@@ -13,8 +13,17 @@ describe('FinalMiddleware', function () {
 
     beforeEach(function () {
 
+        $this->request = Mockery::mock(ServerRequestInterface::class);
+        $this->response = Mockery::mock(ResponseInterface::class);
+        $this->delegate = Mockery::mock(FinalDelegate::class);
         $this->delegate = Mockery::mock(DelegateInterface::class);
         $this->middleware = new FinalMiddleware($this->delegate);
+
+    });
+
+    afterEach(function () {
+
+        Mockery::close();
 
     });
 
@@ -26,21 +35,15 @@ describe('FinalMiddleware', function () {
 
     describe('->process()', function () {
 
-        it('should process the request with the injected instance of DelegateInterface', function () {
+        it('should proxy the process method of the underlying delegate', function () {
 
-            $request = Mockery::mock(ServerRequestInterface::class);
-            $response = Mockery::mock(ResponseInterface::class);
-            $delegate = Mockery::mock(FinalDelegate::class);
+            $this->delegate->shouldReceive('process')->once()
+                ->with($this->request)
+                ->andReturn($this->response);
 
-            $this->delegate->shouldReceive('process')
-                ->with($request)
-                ->andReturn($response);
+            $test = $this->middleware->process($this->request, $this->delegate);
 
-            $delegate->shouldNotReceive('process');
-
-            $test = $this->middleware->process($request, $delegate);
-
-            expect($test)->to->be->equal($response);
+            expect($test)->to->be->equal($this->response);
 
         });
 
