@@ -25,9 +25,11 @@
         "php": ">=7.1",
         "psr/http-message": "^1.0",
         "http-interop/http-middleware": "^0.4.0",
-        "ellipse/contracts-dispatcher": "dev-master",
-        "ellipse/contracts-resolver": "dev-master",
-        "ellipse/resolvers-abstract": "dev-master",
+        "container-interop/service-provider": "^0.3.0",
+        "ellipse/binder": "^1.0",
+        "ellipse/contracts-dispatcher": "^1.0",
+        "ellipse/contracts-resolver": "^1.0",
+        "ellipse/resolvers-abstract": "^1.0",
         "mindplay/readable": "^1.1"
     },
     "require-dev": {
@@ -43,6 +45,13 @@
     "extra": {
         "branch-alias": {
             "dev-master": "1.0.x-dev"
+        },
+        "bindings": {
+            "classes": {
+                "service-providers": [
+                    "Ellipse\\Dispatcher\\DispatcherServiceProvider"
+                ]
+            }
         }
     }
 }

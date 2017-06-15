@@ -41,7 +41,11 @@ describe('Dispatcher', function () {
 
     describe('->with()', function () {
 
-        it('should produce a new Dispatcher instance containing the given instance of MiddlewareInterface', function () {
+        beforeEach(function () {
+
+            $this->resolver->shouldReceive('resolve')->once()
+                ->with('element')
+                ->andReturn($this->middleware);
 
             $this->middleware->shouldReceive('process')->once()
                 ->with($this->request, Mockery::type(DelegateInterface::class))
@@ -49,7 +53,24 @@ describe('Dispatcher', function () {
 
             $this->delegate->shouldNotReceive('process');
 
-            $test1 = $this->dispatcher->with($this->middleware);
+        });
+
+        it('should produce a new Dispatcher instance containing the given element', function () {
+
+            $test1 = $this->dispatcher->with('element');
+
+            expect($test1)->to->be->an->instanceof(DispatcherInterface::class);
+            expect($test1)->to->not->be->equal($this->dispatcher);
+
+            $test2 = $test1->process($this->request, $this->delegate);
+
+            expect($test2)->to->be->equal($this->response);
+
+        });
+
+        it('should handle array of elements', function () {
+
+            $test1 = $this->dispatcher->with(['element']);
 
             expect($test1)->to->be->an->instanceof(DispatcherInterface::class);
             expect($test1)->to->not->be->equal($this->dispatcher);

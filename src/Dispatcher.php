@@ -50,6 +50,12 @@ class Dispatcher implements DispatcherInterface
      */
     public function with($element): DispatcherInterface
     {
+        if (is_array($element)) {
+
+            $element = new Dispatcher($element, $this->resolver);
+
+        }
+
         $elements = array_merge($this->elements, [$element]);
 
         return new Dispatcher($elements, $this->resolver);
