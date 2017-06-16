@@ -30,6 +30,7 @@
         "ellipse/contracts-dispatcher": "^1.0",
         "ellipse/contracts-resolver": "^1.0",
         "ellipse/resolvers-abstract": "^1.0",
+        "ellipse/resolvers-composite": "^1.0",
         "mindplay/readable": "^1.1"
     },
     "require-dev": {
