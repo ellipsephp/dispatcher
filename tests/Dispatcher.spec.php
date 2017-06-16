@@ -41,7 +41,7 @@ describe('Dispatcher', function () {
 
     describe('->with()', function () {
 
-        beforeEach(function () {
+        it('should produce a new Dispatcher instance containing the given element', function () {
 
             $this->resolver->shouldReceive('resolve')->once()
                 ->with('element')
@@ -53,24 +53,7 @@ describe('Dispatcher', function () {
 
             $this->delegate->shouldNotReceive('process');
 
-        });
-
-        it('should produce a new Dispatcher instance containing the given element', function () {
-
             $test1 = $this->dispatcher->with('element');
-
-            expect($test1)->to->be->an->instanceof(DispatcherInterface::class);
-            expect($test1)->to->not->be->equal($this->dispatcher);
-
-            $test2 = $test1->process($this->request, $this->delegate);
-
-            expect($test2)->to->be->equal($this->response);
-
-        });
-
-        it('should handle array of elements', function () {
-
-            $test1 = $this->dispatcher->with(['element']);
 
             expect($test1)->to->be->an->instanceof(DispatcherInterface::class);
             expect($test1)->to->not->be->equal($this->dispatcher);
@@ -152,36 +135,97 @@ describe('Dispatcher', function () {
 
     describe('->dispatch()', function () {
 
-        it('should return the response returned by the given middleware', function () {
+        context('when the dispatcher contains valid elements', function () {
 
-            $this->middleware->shouldReceive('process')->once()
-                ->with($this->request, Mockery::type(DelegateInterface::class))
-                ->andReturn($this->response);
+            beforeEach(function () {
 
-            $test = $this->dispatcher->with($this->middleware)->dispatch($this->request);
+                $this->element = 'element';
 
-            expect($test)->to->be->equal($this->response);
+                $this->resolved = new class implements MiddlewareInterface
+                {
+                    public function process(ServerRequestInterface $request, DelegateInterface $delegate)
+                    {
+                        return $delegate->process($request);
+                    }
+                };
 
+                $this->middleware->shouldReceive('process')->once()
+                    ->with($this->request, Mockery::type(DelegateInterface::class))
+                    ->andReturn($this->response);
+
+                $this->resolver->shouldReceive('resolve')->once()
+                    ->with($this->element)
+                    ->andReturn($this->resolved);
+
+            });
+
+            it('should return the response produced by the given middleware', function () {
+
+                $test = $this->dispatcher
+                    ->with($this->element)
+                    ->with($this->middleware)
+                    ->dispatch($this->request);
+
+                expect($test)->to->be->equal($this->response);
+
+            });
+
+            it('should return the response produced by the given array of middleware', function () {
+
+                $list = [$this->element, $this->middleware];
+
+                $test = $this->dispatcher->with($list)->dispatch($this->request);
+
+                expect($test)->to->be->equal($this->response);
+
+            });
+
+            it('should return the response produced by a traversable instance containing middleware', function () {
+
+                $list = new ArrayObject([$this->element, $this->middleware]);
+
+                $test = $this->dispatcher->with($list)->dispatch($this->request);
+
+                expect($test)->to->be->equal($this->response);
+
+            });
+
+            it('should work recursively', function () {
+
+                $list = [
+                    clone($this->resolved),
+                    [$this->element, $this->middleware],
+                ];
+
+                $test = $this->dispatcher->with($list)->dispatch($this->request);
+
+                expect($test)->to->be->equal($this->response);
+
+            });
 
         });
 
-        it('should fail when empty', function () {
+        context('when the dispatcher contains invalid elements', function () {
 
-            expect([$this->dispatcher, 'dispatch'])->with($this->request)
-                ->to->throw(NoResponseReturnedException::class);
+            it('should fail when empty', function () {
 
-        });
+                expect([$this->dispatcher, 'dispatch'])->with($this->request)
+                    ->to->throw(NoResponseReturnedException::class);
 
-        it('should fail when a middleware does not return an instance of ResponseInterface', function () {
+            });
 
-            $this->middleware->shouldReceive('process')->once()
-                ->with($this->request, Mockery::type(DelegateInterface::class))
-                ->andReturn('test');
+            it('should fail when a middleware does not return an instance of ResponseInterface', function () {
 
-            $dispatcher = $this->dispatcher->with($this->middleware);
+                $this->middleware->shouldReceive('process')->once()
+                    ->with($this->request, Mockery::type(DelegateInterface::class))
+                    ->andReturn('test');
 
-            expect([$dispatcher, 'dispatch'])->with($this->request)
-                ->to->throw(InvalidMiddlewareReturnValueException::class);
+                $dispatcher = $this->dispatcher->with($this->middleware);
+
+                expect([$dispatcher, 'dispatch'])->with($this->request)
+                    ->to->throw(InvalidMiddlewareReturnValueException::class);
+
+            });
 
         });
 

@@ -50,12 +50,6 @@ class Dispatcher implements DispatcherInterface
      */
     public function with($element): DispatcherInterface
     {
-        if (is_array($element)) {
-
-            $element = new Dispatcher($element, $this->resolver);
-
-        }
-
         $elements = array_merge($this->elements, [$element]);
 
         return new Dispatcher($elements, $this->resolver);
@@ -85,6 +79,12 @@ class Dispatcher implements DispatcherInterface
                 if (array_key_exists($index, $this->elements)) {
 
                     $element = $this->elements[$index];
+
+                    if (is_iterable($element)) {
+
+                        $element = new Dispatcher($element, $this->resolver);
+
+                    }
 
                     $middleware = ! $element instanceof MiddlewareInterface
                         ? $this->resolver->resolve($element)
