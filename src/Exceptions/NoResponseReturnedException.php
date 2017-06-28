@@ -4,8 +4,6 @@ namespace Ellipse\Dispatcher\Exceptions;
 
 use RuntimeException;
 
-use Ellipse\Contracts\Dispatcher\Exceptions\DispatcherExceptionInterface;
-
 class NoResponseReturnedException extends RuntimeException implements DispatcherExceptionInterface
 {
     public function __construct()
