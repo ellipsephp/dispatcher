@@ -17,8 +17,8 @@ class InvalidMiddlewareReturnValueException extends RuntimeException implements 
         parent::__construct(
             sprintf(
                 'The value %s returned by the middleware %s is not a PSR 7 response.',
-                readable::value($middleware),
-                readable::value($response)
+                readable::value($response),
+                readable::value($middleware)
             )
         );
     }
