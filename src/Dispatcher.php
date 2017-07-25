@@ -10,110 +10,69 @@ use Psr\Http\Message\ResponseInterface;
 use Interop\Http\ServerMiddleware\MiddlewareInterface;
 use Interop\Http\ServerMiddleware\DelegateInterface;
 
-use Ellipse\Contracts\Dispatcher\DispatcherInterface;
-use Ellipse\Contracts\Resolver\ResolverInterface;
-
-class Dispatcher implements DispatcherInterface
+class Dispatcher implements DelegateInterface
 {
     /**
-     * The resolver used to get middleware from the elements composing the
-     * stack.
+     * The list of middleware.
      *
-     * @var \Ellipse\Contracts\Resolver\ResolverInterface
+     * @var iterable
      */
-    private $resolver;
+    private $middleware = [];
 
     /**
-     * The elements list composing the stack.
+     * The final delegate.
      *
-     * @var array
+     * @var \Psr\Http\Message\DelegateInterface
      */
-    private $elements = [];
+    private $final;
 
     /**
-     * Sets up a dispatcher with the given elements list and the given resolver.
+     * Sets up a dispatcher with the given middleware list and an optional final
+     * delegate.
      *
-     * @param iterable                                      $elements
-     * @param \Ellipse\Contracts\Resolver\ResolverInterface $resolver
+     * @param iterable                                      $middleware
+     * @param \Psr\Http\Message\DelegateInterface           $delegate
      */
-    public function __construct(iterable $elements = [], ResolverInterface $resolver = null)
+    public function __construct(iterable $middleware = [], DelegateInterface $final = null)
     {
-        $this->elements = $elements instanceof Traversable
-            ? iterator_to_array($elements)
-            : $elements;
-
-        $this->resolver = $resolver ?: new VoidResolver;
+        $this->middleware = $middleware;
+        $this->final = $final ?: new FinalDelegate;
     }
 
     /**
-     * @{inheritdoc}
-     */
-    public function with($element): DispatcherInterface
-    {
-        $elements = array_merge($this->elements, [$element]);
-
-        return new Dispatcher($elements, $this->resolver);
-    }
-
-    /**
-     * @{inheritdoc}
-     */
-    public function withResolver(ResolverInterface $resolver): DispatcherInterface
-    {
-        return new Dispatcher($this->elements, $resolver);
-    }
-
-    /**
-     * Dispatch a request through the middleware stack and return the produced
-     * response.
+     * Handle a request by processing it with all the middleware and return the
+     * produced response.
      *
      * @param \Psr\Http\Message\ServerRequestInterface $request
      * @return \Psr\Http\Message\ResponseInterface
      */
-    public function dispatch(ServerRequestInterface $request): ResponseInterface
+    public function process(ServerRequestInterface $request): ResponseInterface
     {
-        $dispatcher = function () {
+        // get an array when the middleware list is a Traversable instance
+        $middleware = $this->middleware instanceof Traversable
+            ? iterator_to_array($this->middleware)
+            : $this->middleware;
 
-            $generator = function (callable $generator, $index = 0) {
-
-                if (array_key_exists($index, $this->elements)) {
-
-                    $element = $this->elements[$index];
-
-                    if (is_iterable($element)) {
-
-                        $element = new Dispatcher($element, $this->resolver);
-
-                    }
-
-                    $middleware = ! $element instanceof MiddlewareInterface
-                        ? $this->resolver->resolve($element)
-                        : $element;
-
-                    return new Delegate($middleware, $generator($generator, $index + 1));
-
-                }
-
-                return new FinalDelegate;
-
-            };
-
-            return $generator($generator);
-
-        };
-
-        return $dispatcher()->process($request);
+        // make a delegate out of the list of middleware and use it to process
+        // the request.
+        return $this->getDelegate($middleware)->process($request);
     }
 
     /**
-     * Run the dispatcher as one middleware.
+     * Return a delegate for the middleware at the given index.
      *
-     * @param \Psr\Http\Message\ServerRequestInterface  $request
-     * @param \Psr\Http\Message\DelegateInterface       $delegate
-     * @return \Psr\Http\Message\ResponseInterface
+     * @param array $middleware
+     * @param int   $index
+     * @return \Psr\Http\Message\DelegateInterface
      */
-    public function process(ServerRequestInterface $request, DelegateInterface $delegate)
+    private function getDelegate(array $middleware, int $index = 0): DelegateInterface
     {
-        return $this->with(new FinalMiddleware($delegate))->dispatch($request);
+        if (array_key_exists($index, $middleware)) {
+
+            return new Delegate($middleware[$index], $this->getDelegate($middleware, $index + 1));
+
+        }
+
+        return $this->final ?? new FinalDelegate;
     }
 }

@@ -8,8 +8,6 @@ use Interop\Http\ServerMiddleware\MiddlewareInterface;
 
 use mindplay\readable;
 
-use Ellipse\Contracts\Dispatcher\Exceptions\DispatcherExceptionInterface;
-
 class InvalidMiddlewareReturnValueException extends RuntimeException implements DispatcherExceptionInterface
 {
     public function __construct(MiddlewareInterface $middleware, $response)

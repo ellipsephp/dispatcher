@@ -2,9 +2,7 @@
 
 namespace Ellipse\Dispatcher\Exceptions;
 
-use Ellipse\Contracts\Dispatcher\Exceptions\DispatcherExceptionInterface as BaseDispatcherExceptionInterface;
-
-interface DispatcherExceptionInterface extends BaseDispatcherExceptionInterface
+interface DispatcherExceptionInterface
 {
     //
 }
