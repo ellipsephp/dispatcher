@@ -27,11 +27,22 @@ class Dispatcher implements DelegateInterface
     private $final;
 
     /**
+     * Static method for creating a dispatcher.
+     *
+     * @param iterable                            $middleware
+     * @param \Psr\Http\Message\DelegateInterface $delegate
+     */
+    public static function create(iterable $middleware = [], DelegateInterface $final = null)
+    {
+        return new Dispatcher($middleware, $final);
+    }
+
+    /**
      * Sets up a dispatcher with the given middleware list and an optional final
      * delegate.
      *
-     * @param iterable                                      $middleware
-     * @param \Psr\Http\Message\DelegateInterface           $delegate
+     * @param iterable                            $middleware
+     * @param \Psr\Http\Message\DelegateInterface $delegate
      */
     public function __construct(iterable $middleware = [], DelegateInterface $final = null)
     {

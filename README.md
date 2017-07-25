@@ -43,7 +43,30 @@ $dispatcher = new Dispatcher([
 $request = get_server_request();
 
 // Returns the response produced by SomeMiddleware and SomeOtherMiddleware for the given request.
-$dispatcher->dispatch($request);
+$dispatcher->process($request);
+```
+
+A `Dispatcher` instance can also be created with the static method `::create()`.
+
+```php
+<?php
+
+namespace App;
+
+use Psr\Http\Message\ServerRequestInterface;
+
+use Ellipse\Dispatcher\Dispatcher;
+use App\SomeMiddleware;
+use App\SomeOtherMiddleware;
+
+// Get an instance of ServerRequestInterface.
+$request = get_server_request();
+
+// Get a list of middleware.
+$middleware = [new SomeMiddleware, new SomeOtherMiddleware];
+
+// Get a dispatcher and process the request.
+$response = Dispatcher::create($middleware)->process($request);
 ```
 
 Please also note the `Dispatcher` class implements Psr-15 `DelegateInterface` so it can be added into another `Dispatcher` instance, or used with any Psr-15 middleware.
@@ -74,5 +97,5 @@ $request = get_server_request();
 
 // Returns the response produced by SomeMiddleware, SomeOtherMiddleware and YetSomeOtherMiddleware
 // for the given request.
-$dispatcher->dispatch($request);
+$dispatcher->process($request);
 ```

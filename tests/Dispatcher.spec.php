@@ -24,6 +24,18 @@ describe('Dispatcher', function () {
 
     });
 
+    describe('::create()', function () {
+
+        it('should return a Dispatcher instance', function () {
+
+            $test = Dispatcher::create([], Mockery::mock(DelegateInterface::class));
+
+            expect($test)->to->be->an->instanceof(Dispatcher::class);
+
+        });
+
+    });
+
     describe('->process()', function () {
 
         beforeEach(function () {
