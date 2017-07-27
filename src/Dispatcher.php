@@ -33,8 +33,9 @@ class Dispatcher implements DelegateInterface
      *
      * @param mixed                                 $middleware
      * @param \Psr\Http\Message\DelegateInterface   $delegate
+     * @return \Ellipse\Dispatcher\Dispatcher
      */
-    public static function create($middleware = [], DelegateInterface $final = null)
+    public static function create($middleware = [], DelegateInterface $final = null): Dispatcher
     {
         return new Dispatcher($middleware, $final);
     }
