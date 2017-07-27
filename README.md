@@ -14,13 +14,15 @@ Please note that Psr-15 specification is not yet official and may be subject to 
 
 ## Dispatching a request
 
-This package provides a `Ellipse\Dispatcher\Dispatcher` class which can be instantiated with a list of Psr-15 middleware. The list can either be an array or a `Traversable` instance. It also takes an instance of `Interop\Http\ServerMiddleware\DelegateInterface` as an optional second parameter and it will be used as the final delegate.
+This package provides a `Ellipse\Dispatcher\Dispatcher` class which can be instantiated with a list of Psr-15 middleware. The list of middleware can be either an array, an instance of `ArrayAccess` or an instance of `Traversable`. It also takes an instance of `Interop\Http\ServerMiddleware\DelegateInterface` as an optional second parameter and it will be used as the final delegate.
 
 Once the dispatcher is built, the `->process(Request $request): Response` method can be used to get the response produced by the dispatcher's middleware list for the given request. It can be used as many time as needed with any Psr-7 request.
 
-When the dispatcher's middleware list do not produce a response, a `Ellipse\Dispatcher\Exceptions\NoResponseReturnedException` is thrown.
+When one element of the list is not a Psr-15 middleware, a `Ellipse\Dispatcher\Exceptions\ElementIsNotAMiddlewareException` is thrown.
 
 When one of the middleware produce anything else than a Psr-7 response, a `Ellipse\Dispatcher\Exceptions\InvalidMiddlewareReturnValueException` is thrown.
+
+When the dispatcher's middleware list do not produce a response, a `Ellipse\Dispatcher\Exceptions\NoResponseReturnedException` is thrown.
 
 ```php
 <?php

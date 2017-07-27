@@ -7,6 +7,7 @@ use Interop\Http\ServerMiddleware\MiddlewareInterface;
 use Interop\Http\ServerMiddleware\DelegateInterface;
 
 use Ellipse\Dispatcher\Dispatcher;
+use Ellipse\Dispatcher\Exceptions\ElementIsNotAMiddlewareException;
 use Ellipse\Dispatcher\Exceptions\NoResponseReturnedException;
 use Ellipse\Dispatcher\Exceptions\InvalidMiddlewareReturnValueException;
 
@@ -46,9 +47,7 @@ describe('Dispatcher', function () {
 
         });
 
-        it('should return the response produced by an array of middleware', function () {
-
-            $resolver = Mockery::mock(ResolverInterface::class);
+        it('should return the response produced by a list of middleware', function () {
 
             $middleware1 = new class implements MiddlewareInterface {
 
@@ -60,41 +59,13 @@ describe('Dispatcher', function () {
 
             $middleware2 = Mockery::mock(MiddlewareInterface::class);
 
-            $dispatcher = new Dispatcher([$middleware1, $middleware2], $this->final, $resolver);
+            $dispatcher = new Dispatcher([$middleware1, $middleware2], $this->final);
 
             $middleware2->shouldReceive('process')->once()
                 ->with($this->request, $this->final)
                 ->andReturn($this->response);
 
             $this->final->shouldNotReceive('process');
-
-            $test = $dispatcher->process($this->request);
-
-            expect($test)->to->be->equal($this->response);
-
-        });
-
-        it('should return the response produced by a traversable instance containing middleware', function () {
-
-            $resolver = Mockery::mock(ResolverInterface::class);
-
-            $middleware1 = new class implements MiddlewareInterface {
-
-                public function process(ServerRequestInterface $request, DelegateInterface $delegate)
-                {
-                    return $delegate->process($request);
-                }
-            };
-
-            $middleware2 = Mockery::mock(MiddlewareInterface::class);
-
-            $dispatcher = new Dispatcher(new ArrayObject([$middleware1, $middleware2]), $this->final, $resolver);
-
-            $this->final->shouldNotReceive('process');
-
-            $middleware2->shouldReceive('process')->once()
-                ->with($this->request, $this->final)
-                ->andReturn($this->response);
 
             $test = $dispatcher->process($this->request);
 
@@ -121,6 +92,17 @@ describe('Dispatcher', function () {
             $test = $dispatcher->process($this->request);
 
             expect($test)->to->be->equal($this->response);
+
+        });
+
+        it('should fail when an element is not a middleware', function () {
+
+            $middleware = 'middleware';
+
+            $dispatcher = new Dispatcher([$middleware], $this->final);
+
+            expect([$dispatcher, 'process'])->with($this->request)
+                ->to->throw(ElementIsNotAMiddlewareException::class);
 
         });
 

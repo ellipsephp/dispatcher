@@ -2,22 +2,24 @@
 
 namespace Ellipse\Dispatcher;
 
-use Traversable;
-
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
 use Interop\Http\ServerMiddleware\MiddlewareInterface;
 use Interop\Http\ServerMiddleware\DelegateInterface;
 
+use Ellipse\Dispatcher\Exceptions\ElementIsNotAMiddlewareException;
+
+use Ellipse\Utils\IteratorFactory;
+
 class Dispatcher implements DelegateInterface
 {
     /**
      * The list of middleware.
      *
-     * @var iterable
+     * @var \Iterator
      */
-    private $middleware = [];
+    private $iterator;
 
     /**
      * The final delegate.
@@ -29,10 +31,10 @@ class Dispatcher implements DelegateInterface
     /**
      * Static method for creating a dispatcher.
      *
-     * @param iterable                            $middleware
-     * @param \Psr\Http\Message\DelegateInterface $delegate
+     * @param mixed                                 $middleware
+     * @param \Psr\Http\Message\DelegateInterface   $delegate
      */
-    public static function create(iterable $middleware = [], DelegateInterface $final = null)
+    public static function create($middleware = [], DelegateInterface $final = null)
     {
         return new Dispatcher($middleware, $final);
     }
@@ -41,13 +43,13 @@ class Dispatcher implements DelegateInterface
      * Sets up a dispatcher with the given middleware list and an optional final
      * delegate.
      *
-     * @param iterable                            $middleware
-     * @param \Psr\Http\Message\DelegateInterface $delegate
+     * @param mixed                                 $middleware
+     * @param \Psr\Http\Message\DelegateInterface   $delegate
      */
-    public function __construct(iterable $middleware = [], DelegateInterface $final = null)
+    public function __construct($middleware = [], DelegateInterface $final = null)
     {
-        $this->middleware = $middleware;
-        $this->final = $final ?: new FinalDelegate;
+        $this->iterator = IteratorFactory::create($middleware);
+        $this->final = $final;
     }
 
     /**
@@ -59,28 +61,34 @@ class Dispatcher implements DelegateInterface
      */
     public function process(ServerRequestInterface $request): ResponseInterface
     {
-        // get an array when the middleware list is a Traversable instance
-        $middleware = $this->middleware instanceof Traversable
-            ? iterator_to_array($this->middleware)
-            : $this->middleware;
+        // Reset the iterator so the dispatcher can be used multiple times.
+        $this->iterator->rewind();
 
         // make a delegate out of the list of middleware and use it to process
         // the request.
-        return $this->getDelegate($middleware)->process($request);
+        return $this->getNextDelegate()->process($request);
     }
 
     /**
-     * Return a delegate for the middleware at the given index.
+     * Return the next delegate.
      *
-     * @param array $middleware
-     * @param int   $index
      * @return \Psr\Http\Message\DelegateInterface
      */
-    private function getDelegate(array $middleware, int $index = 0): DelegateInterface
+    private function getNextDelegate(): DelegateInterface
     {
-        if (array_key_exists($index, $middleware)) {
+        $middleware = $this->iterator->current();
 
-            return new Delegate($middleware[$index], $this->getDelegate($middleware, $index + 1));
+        $this->iterator->next();
+
+        if (! is_null($middleware)) {
+
+            if (! $middleware instanceof MiddlewareInterface) {
+
+                throw new ElementIsNotAMiddlewareException($middleware);
+
+            }
+
+            return new Delegate($middleware, $this->getNextDelegate());
 
         }
 
