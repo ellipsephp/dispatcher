@@ -76,11 +76,11 @@ class Dispatcher implements DelegateInterface
      */
     private function getNextDelegate(): DelegateInterface
     {
-        $middleware = $this->iterator->current();
+        if ($this->iterator->valid()) {
 
-        $this->iterator->next();
+            $middleware = $this->iterator->current();
 
-        if (! is_null($middleware)) {
+            $this->iterator->next();
 
             if (! $middleware instanceof MiddlewareInterface) {
 
