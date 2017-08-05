@@ -49,7 +49,7 @@ class Dispatcher implements DelegateInterface
      */
     public function __construct($middleware = [], DelegateInterface $final = null)
     {
-        $this->iterator = IteratorFactory::create($middleware);
+        $this->iterator = (new IteratorFactory)->getIterator($middleware);
         $this->final = $final;
     }
 
