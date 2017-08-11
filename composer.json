@@ -31,7 +31,7 @@
     "require-dev": {
         "peridot-php/peridot": "^1.19",
         "peridot-php/leo": "^1.6",
-        "mockery/mockery": "^1.0-alpha"
+        "mockery/mockery": "^1.0@alpha"
     },
     "autoload": {
         "psr-4": {
