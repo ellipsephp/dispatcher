@@ -4,7 +4,7 @@ namespace Ellipse\Dispatcher\Exceptions;
 
 use RuntimeException;
 
-use Interop\Http\ServerMiddleware\MiddlewareInterface;
+use Interop\Http\Server\MiddlewareInterface;
 
 use mindplay\readable;
 

@@ -5,14 +5,14 @@ namespace Ellipse\Dispatcher;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
-use Interop\Http\ServerMiddleware\MiddlewareInterface;
-use Interop\Http\ServerMiddleware\DelegateInterface;
+use Interop\Http\Server\MiddlewareInterface;
+use Interop\Http\Server\RequestHandlerInterface;
 
 use Ellipse\Dispatcher\Exceptions\ElementIsNotAMiddlewareException;
 
 use Ellipse\Utils\IteratorFactory;
 
-class Dispatcher implements DelegateInterface
+class Dispatcher implements RequestHandlerInterface
 {
     /**
      * The list of middleware.
@@ -22,35 +22,35 @@ class Dispatcher implements DelegateInterface
     private $iterator;
 
     /**
-     * The final delegate.
+     * The final request handler.
      *
-     * @var \Psr\Http\Message\DelegateInterface
+     * @var \Psr\Http\Message\RequestHandlerInterface
      */
     private $final;
 
     /**
-     * Static method for creating a dispatcher.
+     * Static method for creating a dispatcher with the given middleware list
+     * and request handler.
      *
-     * @param mixed                                 $middleware
-     * @param \Psr\Http\Message\DelegateInterface   $delegate
+     * @param mixed                                         $middleware
+     * @param \Interop\Http\Server\RequestHandlerInterface  $handler
      * @return \Ellipse\Dispatcher\Dispatcher
      */
-    public static function create($middleware = [], DelegateInterface $final = null): Dispatcher
+    public static function create($middleware, RequestHandlerInterface $handler): Dispatcher
     {
-        return new Dispatcher($middleware, $final);
+        return new Dispatcher($middleware, $handler);
     }
 
     /**
-     * Sets up a dispatcher with the given middleware list and an optional final
-     * delegate.
+     * Sets up a dispatcher with the given middleware list and request handler.
      *
-     * @param mixed                                 $middleware
-     * @param \Psr\Http\Message\DelegateInterface   $delegate
+     * @param mixed                                         $middleware
+     * @param \Interop\Http\Server\RequestHandlerInterface  $handler
      */
-    public function __construct($middleware = [], DelegateInterface $final = null)
+    public function __construct($middleware, RequestHandlerInterface $handler)
     {
         $this->iterator = (new IteratorFactory)->getIterator($middleware);
-        $this->final = $final;
+        $this->handler = $handler;
     }
 
     /**
@@ -60,22 +60,22 @@ class Dispatcher implements DelegateInterface
      * @param \Psr\Http\Message\ServerRequestInterface $request
      * @return \Psr\Http\Message\ResponseInterface
      */
-    public function process(ServerRequestInterface $request): ResponseInterface
+    public function handle(ServerRequestInterface $request): ResponseInterface
     {
         // Reset the iterator so the dispatcher can be used multiple times.
         $this->iterator->rewind();
 
-        // make a delegate out of the list of middleware and use it to process
+        // make a handler out of the list of middleware and use it to handle
         // the request.
-        return $this->getNextDelegate()->process($request);
+        return $this->getNextRequestHandler()->handle($request);
     }
 
     /**
-     * Return the next delegate.
+     * Return the next request handler.
      *
-     * @return \Psr\Http\Message\DelegateInterface
+     * @return \Psr\Http\Message\RequestHandlerInterface
      */
-    private function getNextDelegate(): DelegateInterface
+    private function getNextRequestHandler(): RequestHandlerInterface
     {
         if ($this->iterator->valid()) {
 
@@ -89,10 +89,10 @@ class Dispatcher implements DelegateInterface
 
             }
 
-            return new Delegate($middleware, $this->getNextDelegate());
+            return new RequestHandler($middleware, $this->getNextRequestHandler());
 
         }
 
-        return $this->final ?? new FinalDelegate;
+        return $this->handler;
     }
 }

@@ -3,21 +3,21 @@
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
-use Interop\Http\ServerMiddleware\MiddlewareInterface;
-use Interop\Http\ServerMiddleware\DelegateInterface;
+use Interop\Http\Server\MiddlewareInterface;
+use Interop\Http\Server\RequestHandlerInterface;
 
-use Ellipse\Dispatcher\Delegate;
+use Ellipse\Dispatcher\RequestHandler;
 use Ellipse\Dispatcher\Exceptions\InvalidMiddlewareReturnValueException;
 
-describe('Delegate', function () {
+describe('RequestHandler', function () {
 
     beforeEach(function () {
 
         $this->request = Mockery::mock(ServerRequestInterface::class);
         $this->response = Mockery::mock(ResponseInterface::class);
         $this->middleware = Mockery::mock(MiddlewareInterface::class);
-        $this->next = Mockery::mock(DelegateInterface::class);
-        $this->delegate = new Delegate($this->middleware, $this->next);
+        $this->next = Mockery::mock(RequestHandlerInterface::class);
+        $this->handler = new RequestHandler($this->middleware, $this->next);
 
     });
 
@@ -27,9 +27,9 @@ describe('Delegate', function () {
 
     });
 
-    it('should implements DelegateInterface', function () {
+    it('should implements RequestHandlerInterface', function () {
 
-        expect($this->delegate)->to->be->an->instanceof(DelegateInterface::class);
+        expect($this->handler)->to->be->an->instanceof(RequestHandlerInterface::class);
 
     });
 
@@ -41,7 +41,7 @@ describe('Delegate', function () {
                 ->with($this->request, $this->next)
                 ->andReturn($this->response);
 
-            $test = $this->delegate->process($this->request);
+            $test = $this->handler->handle($this->request);
 
             expect($test)->to->be->equal($this->response);
 
@@ -53,7 +53,7 @@ describe('Delegate', function () {
                 ->with($this->request, $this->next)
                 ->andReturn('test');
 
-            expect([$this->delegate, 'process'])->with($this->request)
+            expect([$this->handler, 'handle'])->with($this->request)
                 ->to->throw(InvalidMiddlewareReturnValueException::class);
 
         });

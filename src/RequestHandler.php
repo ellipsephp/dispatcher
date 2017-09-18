@@ -5,38 +5,38 @@ namespace Ellipse\Dispatcher;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
-use Interop\Http\ServerMiddleware\MiddlewareInterface;
-use Interop\Http\ServerMiddleware\DelegateInterface;
+use Interop\Http\Server\MiddlewareInterface;
+use Interop\Http\Server\RequestHandlerInterface;
 
 use Ellipse\Dispatcher\Exceptions\InvalidMiddlewareReturnValueException;
 
-class Delegate implements DelegateInterface
+class RequestHandler implements RequestHandlerInterface
 {
     /**
      * The middleware to process.
      *
-     * @var \Interop\Http\ServerMiddleware\MiddlewareInterface
+     * @var \Interop\Http\Server\MiddlewareInterface
      */
     private $middleware;
 
     /**
-     * The delegate to pass to the middleware.
+     * The request handler to pass to the middleware.
      *
-     * @var \Interop\Http\ServerMiddleware\DelegateInterface
+     * @var \Interop\Http\Server\RequestHandlerInterface
      */
-    private $delegate;
+    private $handler;
 
     /**
-     * Set up the delegate with the middleware to process and the delegate to
-     * pass to the middleware.
+     * Set up the handler with the middleware to process and the request handler
+     * to pass to the middleware.
      *
-     * @param \Interop\Http\ServerMiddleware\MiddlewareInterface    $middleware
-     * @param \Interop\Http\ServerMiddleware\DelegateInterface      $delegate
+     * @param \Interop\Http\Server\MiddlewareInterface      $middleware
+     * @param \Interop\Http\Server\RequestHandlerInterface  $handler
      */
-    public function __construct(MiddlewareInterface $middleware, DelegateInterface $delegate)
+    public function __construct(MiddlewareInterface $middleware, RequestHandlerInterface $handler)
     {
         $this->middleware = $middleware;
-        $this->delegate = $delegate;
+        $this->handler = $handler;
     }
 
     /**
@@ -46,9 +46,9 @@ class Delegate implements DelegateInterface
      * @return \Psr\Http\Message\ResponseInterface
      * @throws \Ellipse\Dispatcher\Exceptions\InvalidMiddlewareReturnValueException
      */
-    public function process(ServerRequestInterface $request)
+    public function handle(ServerRequestInterface $request)
     {
-        $response = $this->middleware->process($request, $this->delegate);
+        $response = $this->middleware->process($request, $this->handler);
 
         if (! $response instanceof ResponseInterface) {
 
