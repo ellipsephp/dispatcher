@@ -49,7 +49,7 @@ class Dispatcher implements RequestHandlerInterface
      */
     public function __construct($middleware, RequestHandlerInterface $handler)
     {
-        $this->iterator = (new IteratorFactory)->getIterator($middleware);
+        $this->iterator = IteratorFactory::create($middleware);
         $this->handler = $handler;
     }
 
