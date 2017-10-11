@@ -101,6 +101,7 @@ describe('MiddlewareStack', function () {
                 $test = $this->stack->tail();
 
                 expect($test)->to->be->an->instanceof(MiddlewareStack::class);
+                expect($test)->to->not->be->equal($this->stack);
 
             });
         });
