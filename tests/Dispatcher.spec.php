@@ -7,14 +7,17 @@ use Interop\Http\Server\MiddlewareInterface;
 use Interop\Http\Server\RequestHandlerInterface;
 
 use Ellipse\Dispatcher\Dispatcher;
-use Ellipse\Dispatcher\Exceptions\ElementIsNotAMiddlewareException;
-use Ellipse\Dispatcher\Exceptions\InvalidMiddlewareReturnValueException;
+use Ellipse\Dispatcher\MiddlewareStack;
+use Ellipse\Dispatcher\Exceptions\InvalidReturnValueException;
 
 describe('Dispatcher', function () {
 
     beforeEach(function () {
 
+        $this->stack = Mockery::mock(MiddlewareStack::class);
         $this->handler = Mockery::mock(RequestHandlerInterface::class);
+
+        $this->dispatcher = new Dispatcher($this->stack, $this->handler);
 
     });
 
@@ -24,17 +27,17 @@ describe('Dispatcher', function () {
 
     });
 
-    it('should implements DispatcherInterface', function () {
+    it('should implements RequestHandlerInterface', function () {
 
-        expect(new Dispatcher([], $this->handler))->to->be->an->instanceof(RequestHandlerInterface::class);
+        expect($this->dispatcher)->to->be->an->instanceof(RequestHandlerInterface::class);
 
     });
 
-    describe('::create()', function () {
+    describe('::getInstance()', function () {
 
         it('should return a Dispatcher instance', function () {
 
-            $test = Dispatcher::create([], $this->handler);
+            $test = Dispatcher::getInstance(['element'], $this->handler);
 
             expect($test)->to->be->an->instanceof(Dispatcher::class);
 
@@ -42,7 +45,7 @@ describe('Dispatcher', function () {
 
     });
 
-    describe('->process()', function () {
+    describe('->handle()', function () {
 
         beforeEach(function () {
 
@@ -51,75 +54,106 @@ describe('Dispatcher', function () {
 
         });
 
-        it('should return the response produced by a list of middleware when it return a response', function () {
+        context('when the middleware stack is empty', function () {
 
-            $middleware1 = new class implements MiddlewareInterface
-            {
-                public function process(ServerRequestInterface $request, RequestHandlerInterface $delegate)
-                {
-                    return $delegate->handle($request);
-                }
-            };
+            beforeEach(function () {
 
-            $middleware2 = Mockery::mock(MiddlewareInterface::class);
+                $this->stack->shouldReceive('isEmpty')->once()->andReturn(true);
 
-            $dispatcher = new Dispatcher([$middleware1, $middleware2], $this->handler);
+            });
 
-            $middleware2->shouldReceive('process')->once()
-                ->with($this->request, $this->handler)
-                ->andReturn($this->response);
+            context('when the handler ->handle() method returns an implementation of ResponseInterface', function () {
 
-            $this->handler->shouldNotReceive('process');
+                beforeEach(function () {
 
-            $test = $dispatcher->handle($this->request);
+                    $this->handler->shouldReceive('handle')->once()
+                        ->with($this->request)
+                        ->andReturn($this->response);
 
-            expect($test)->to->be->equal($this->response);
+                });
 
-        });
+                it('should return it', function () {
 
-        it('should return the response produced by the final delegate when no middleware returned a response', function () {
+                    $test = $this->dispatcher->handle($this->request);
 
-            $middleware = new class implements MiddlewareInterface
-            {
-                public function process(ServerRequestInterface $request, RequestHandlerInterface $delegate)
-                {
-                    return $delegate->handle($request);
-                }
-            };
+                    expect($test)->to->be->equal($this->response);
 
-            $this->handler->shouldReceive('handle')->once()
-                ->with($this->request)
-                ->andReturn($this->response);
+                });
 
-            $dispatcher = new Dispatcher([$middleware], $this->handler);
+            });
 
-            $test = $dispatcher->handle($this->request);
+            context('when the handler ->handle() method does not return an implementation of ResponseInterface', function () {
 
-            expect($test)->to->be->equal($this->response);
+                beforeEach(function () {
 
-        });
+                    $this->handler->shouldReceive('handle')->once()
+                        ->with($this->request)
+                        ->andReturn(null);
 
-        it('should fail when an element is not a middleware', function () {
+                });
 
-            $dispatcher = new Dispatcher(['middleware'], $this->handler);
+                it('should fail', function () {
 
-            expect([$dispatcher, 'handle'])->with($this->request)
-                ->to->throw(ElementIsNotAMiddlewareException::class);
+                    expect([$this->dispatcher, 'handle'])->with($this->request)
+                        ->to->throw(InvalidReturnValueException::class);
+
+                });
+
+            });
 
         });
 
-        it('should fail when a middleware does not return an instance of ResponseInterface', function () {
+        context('when the middleware stack is not empty', function () {
 
-            $middleware = Mockery::mock(MiddlewareInterface::class);
+            beforeEach(function () {
 
-            $middleware->shouldReceive('process')->once()
-                ->with($this->request, Mockery::type(RequestHandlerInterface::class))
-                ->andReturn('test');
+                $this->head = Mockery::mock(MiddlewareInterface::class);
+                $this->tail = Mockery::mock(MiddlewareStack::class);
 
-            $dispatcher = new Dispatcher([$middleware], $this->handler);
+                $this->stack->shouldReceive('isEmpty')->once()->andReturn(false);
+                $this->stack->shouldReceive('head')->once()->andReturn($this->head);
+                $this->stack->shouldReceive('tail')->once()->andReturn($this->tail);
 
-            expect([$dispatcher, 'handle'])->with($this->request)
-                ->to->throw(InvalidMiddlewareReturnValueException::class);
+            });
+
+            context('when the head middleware ->process() method returns an implementation of ResponseInterface', function () {
+
+                beforeEach(function () {
+
+                    $this->head->shouldReceive('process')->once()
+                        ->with($this->request, Mockery::type(Dispatcher::class))
+                        ->andReturn($this->response);
+
+                });
+
+                it('should return it', function () {
+
+                    $test = $this->dispatcher->handle($this->request);
+
+                    expect($test)->to->be->equal($this->response);
+
+                });
+
+            });
+
+            context('when the head middleware ->process() method does not return an implementation of ResponseInterface', function () {
+
+                beforeEach(function () {
+
+                    $this->head->shouldReceive('process')->once()
+                        ->with($this->request, Mockery::type(Dispatcher::class))
+                        ->andReturn(null);
+
+                });
+
+                it('should fail', function () {
+
+                    expect([$this->dispatcher, 'handle'])->with($this->request)
+                        ->to->throw(InvalidReturnValueException::class);
+
+                });
+
+            });
 
         });
 

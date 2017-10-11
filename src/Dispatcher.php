@@ -8,91 +8,80 @@ use Psr\Http\Message\ResponseInterface;
 use Interop\Http\Server\MiddlewareInterface;
 use Interop\Http\Server\RequestHandlerInterface;
 
-use Ellipse\Dispatcher\Exceptions\ElementIsNotAMiddlewareException;
-
-use Ellipse\Utils\IteratorFactory;
+use Ellipse\Dispatcher\Exceptions\InvalidReturnValueException;
 
 class Dispatcher implements RequestHandlerInterface
 {
     /**
-     * The list of middleware.
+     * The middleware stack.
      *
-     * @var \Iterator
+     * @var \Ellipse\Dispatcher\MiddlewareStack
      */
-    private $iterator;
+    private $stack;
 
     /**
-     * The final request handler.
+     * The request handler.
      *
      * @var \Psr\Http\Message\RequestHandlerInterface
      */
-    private $final;
+    private $handler;
 
     /**
-     * Static method for creating a dispatcher with the given middleware list
-     * and request handler.
+     * Return a new dispatcher with the given middleware and request handler.
      *
-     * @param mixed                                         $middleware
+     * @param iterable                                      $elements
      * @param \Interop\Http\Server\RequestHandlerInterface  $handler
      * @return \Ellipse\Dispatcher\Dispatcher
      */
-    public static function create($middleware, RequestHandlerInterface $handler): Dispatcher
+    public static function getInstance(iterable $elements, RequestHandlerInterface $handler): Dispatcher
     {
-        return new Dispatcher($middleware, $handler);
+        $stack = new MiddlewareStack($elements);
+
+        return new Dispatcher($stack, $handler);
     }
 
     /**
-     * Sets up a dispatcher with the given middleware list and request handler.
+     * Sets up a dispatcher with the given middleware stack and request handler.
      *
-     * @param mixed                                         $middleware
+     * @param \Ellipse\Dispatcher\MiddlewareStack           $stack
      * @param \Interop\Http\Server\RequestHandlerInterface  $handler
      */
-    public function __construct($middleware, RequestHandlerInterface $handler)
+    public function __construct(MiddlewareStack $stack, RequestHandlerInterface $handler)
     {
-        $this->iterator = IteratorFactory::create($middleware);
+        $this->stack = $stack;
         $this->handler = $handler;
     }
 
     /**
-     * Handle a request by processing it with all the middleware and return the
-     * produced response.
+     * Handle a request by processing it through all the middleware and the
+     * request handler.
      *
      * @param \Psr\Http\Message\ServerRequestInterface $request
      * @return \Psr\Http\Message\ResponseInterface
      */
-    public function handle(ServerRequestInterface $request): ResponseInterface
+    public function handle(ServerRequestInterface $request)
     {
-        // Reset the iterator so the dispatcher can be used multiple times.
-        $this->iterator->rewind();
+        if (! $this->stack->isEmpty()) {
 
-        // make a handler out of the list of middleware and use it to handle
-        // the request.
-        return $this->getNextRequestHandler()->handle($request);
-    }
+            $head = $this->stack->head();
+            $tail = $this->stack->tail();
 
-    /**
-     * Return the next request handler.
-     *
-     * @return \Psr\Http\Message\RequestHandlerInterface
-     */
-    private function getNextRequestHandler(): RequestHandlerInterface
-    {
-        if ($this->iterator->valid()) {
+            $handler = new Dispatcher($tail, $this->handler);
 
-            $middleware = $this->iterator->current();
+            $response = $head->process($request, $handler);
 
-            $this->iterator->next();
+        } else {
 
-            if (! $middleware instanceof MiddlewareInterface) {
-
-                throw new ElementIsNotAMiddlewareException($middleware);
-
-            }
-
-            return new RequestHandler($middleware, $this->getNextRequestHandler());
+            $response = $this->handler->handle($request);
 
         }
 
-        return $this->handler;
+        if (! $response instanceof ResponseInterface) {
+
+            throw new InvalidReturnValueException($response);
+
+        }
+
+        return $response;
     }
 }
