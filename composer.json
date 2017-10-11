@@ -32,6 +32,13 @@
         "peridot-php/leo": "^1.6",
         "mockery/mockery": "^1.0@alpha"
     },
+    "suggest": {
+        "ellipse/middleware-callable": "Allows to use callables as middleware",
+        "ellipse/middleware-container": "Allows to use class names as middleware",
+        "ellipse/handlers-callable": "Allows to use callables as request handlers",
+        "ellipse/handlers-container": "Allows to use class names as request handlers",
+        "ellipse/handlers-action": "Allows to use action strings as request handlers"
+    },
     "autoload": {
         "psr-4": {
             "Ellipse\\Dispatcher\\": "src"
