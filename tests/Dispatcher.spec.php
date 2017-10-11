@@ -33,18 +33,6 @@ describe('Dispatcher', function () {
 
     });
 
-    describe('::getInstance()', function () {
-
-        it('should return a Dispatcher instance', function () {
-
-            $test = Dispatcher::getInstance(['element'], $this->handler);
-
-            expect($test)->to->be->an->instanceof(Dispatcher::class);
-
-        });
-
-    });
-
     describe('->handle()', function () {
 
         beforeEach(function () {

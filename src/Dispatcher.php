@@ -27,20 +27,6 @@ class Dispatcher implements RequestHandlerInterface
     private $handler;
 
     /**
-     * Return a new dispatcher with the given middleware and request handler.
-     *
-     * @param iterable                                      $elements
-     * @param \Interop\Http\Server\RequestHandlerInterface  $handler
-     * @return \Ellipse\Dispatcher\Dispatcher
-     */
-    public static function getInstance(iterable $elements, RequestHandlerInterface $handler): Dispatcher
-    {
-        $stack = new MiddlewareStack($elements);
-
-        return new Dispatcher($stack, $handler);
-    }
-
-    /**
      * Sets up a dispatcher with the given middleware stack and request handler.
      *
      * @param \Ellipse\Dispatcher\MiddlewareStack           $stack
