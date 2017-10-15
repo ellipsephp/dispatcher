@@ -41,7 +41,7 @@
     },
     "autoload": {
         "psr-4": {
-            "Ellipse\\Dispatcher\\": "src"
+            "Ellipse\\": "src"
         }
     },
     "extra": {

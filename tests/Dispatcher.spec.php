@@ -6,7 +6,7 @@ use Psr\Http\Message\ResponseInterface;
 use Interop\Http\Server\MiddlewareInterface;
 use Interop\Http\Server\RequestHandlerInterface;
 
-use Ellipse\Dispatcher\Dispatcher;
+use Ellipse\Dispatcher;
 use Ellipse\Dispatcher\MiddlewareStack;
 use Ellipse\Dispatcher\Exceptions\InvalidReturnValueException;
 

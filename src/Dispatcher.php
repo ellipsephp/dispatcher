@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace Ellipse\Dispatcher;
+namespace Ellipse;
 
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -8,6 +8,7 @@ use Psr\Http\Message\ResponseInterface;
 use Interop\Http\Server\MiddlewareInterface;
 use Interop\Http\Server\RequestHandlerInterface;
 
+use Ellipse\Dispatcher\MiddlewareStack;
 use Ellipse\Dispatcher\Exceptions\InvalidReturnValueException;
 
 class Dispatcher implements RequestHandlerInterface

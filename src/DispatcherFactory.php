@@ -1,6 +1,9 @@
 <?php declare(strict_types=1);
 
-namespace Ellipse\Dispatcher;
+namespace Ellipse;
+
+use Ellipse\Dispatcher\MiddlewareStack;
+use Ellipse\Dispatcher\RequestHandlerProxy;
 
 class DispatcherFactory
 {
@@ -37,7 +40,7 @@ class DispatcherFactory
      *
      * @param mixed $middleware
      * @param mixed $handler
-     * @return \Ellipse\Dispatcher\Dispatcher
+     * @return \Ellipse\Dispatcher
      */
     public function __invoke($middleware, $handler)
     {

@@ -1,7 +1,7 @@
 <?php
 
-use Ellipse\Dispatcher\DispatcherFactory;
-use Ellipse\Dispatcher\Dispatcher;
+use Ellipse\Dispatcher;
+use Ellipse\DispatcherFactory;
 
 describe('DispatcherFactory', function () {
 
