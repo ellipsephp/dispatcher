@@ -1,7 +1,7 @@
 {
     "name": "ellipse/dispatcher",
     "type": "library",
-    "description": "The Psr-15 middleware dispatcher component of the ellipse framework",
+    "description": "Psr-15 middleware dispatcher with middleware and request handler resolving feature",
     "keywords": [
         "Psr-15",
         "middleware",
@@ -19,18 +19,14 @@
             "email": "pierre.mallinjoud@gmail.com"
         }
     ],
-    "minimum-stability": "dev",
-    "prefer-stable": true,
     "require": {
         "php": ">=7.1",
         "psr/http-message": "^1.0",
-        "http-interop/http-middleware": "^0.5.0",
-        "mindplay/readable": "^1.1"
+        "http-interop/http-middleware": "^0.5.0"
     },
     "require-dev": {
-        "peridot-php/peridot": "^1.19",
-        "peridot-php/leo": "^1.6",
-        "mockery/mockery": "^1.0@alpha"
+        "kahlan/kahlan": "^4.0",
+        "eloquent/phony-kahlan": "^1.0"
     },
     "suggest": {
         "ellipse/middleware-callable": "Allows to use callables as middleware",
@@ -42,11 +38,6 @@
     "autoload": {
         "psr-4": {
             "Ellipse\\": "src"
-        }
-    },
-    "extra": {
-        "branch-alias": {
-            "dev-master": "1.0.x-dev"
         }
     }
 }

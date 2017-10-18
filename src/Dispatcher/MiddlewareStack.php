@@ -52,7 +52,8 @@ class MiddlewareStack
     /**
      * Return a middleware proxy wrapped around the first element.
      *
-     * @return \Interop\Http\Server\MiddlewareInterface;
+     * @return \Interop\Http\Server\MiddlewareInterface
+     * @throws \RuntimeException
      */
     public function head(): MiddlewareInterface
     {
@@ -70,7 +71,8 @@ class MiddlewareStack
     /**
      * Return a new middleware stack composed of the remaining of the elements.
      *
-     * @return \Ellipse\Dispatcher\MiddlewareStack;
+     * @return \Ellipse\Dispatcher\MiddlewareStack
+     * @throws \RuntimeException
      */
     public function tail(): MiddlewareStack
     {

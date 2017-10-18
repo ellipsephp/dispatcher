@@ -35,14 +35,13 @@ class DispatcherFactory
     }
 
     /**
-     * Return a new dispatcher from the given middleware stack and handler,
-     * using the middleware and request handler resolvers.
+     * Return a new dispatcher from the given middleware stack and handler.
      *
-     * @param mixed $middleware
-     * @param mixed $handler
+     * @param iterable  $middleware
+     * @param mixed     $handler
      * @return \Ellipse\Dispatcher
      */
-    public function __invoke($middleware, $handler)
+    public function __invoke(iterable $middleware, $handler): Dispatcher
     {
         $middleware = new MiddlewareStack($middleware, $this->middleware);
         $handler = new RequestHandlerProxy($handler, $this->handler);

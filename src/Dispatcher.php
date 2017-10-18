@@ -5,7 +5,6 @@ namespace Ellipse;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
-use Interop\Http\Server\MiddlewareInterface;
 use Interop\Http\Server\RequestHandlerInterface;
 
 use Ellipse\Dispatcher\MiddlewareStack;
@@ -45,6 +44,7 @@ class Dispatcher implements RequestHandlerInterface
      *
      * @param \Psr\Http\Message\ServerRequestInterface $request
      * @return \Psr\Http\Message\ResponseInterface
+     * @throws \Ellipse\Dispatcher\Exceptions\InvalidReturnValueException
      */
     public function handle(ServerRequestInterface $request)
     {

@@ -1,22 +1,13 @@
 <?php
 
+use function Eloquent\Phony\Kahlan\mock;
+
 use Interop\Http\Server\MiddlewareInterface;
 
 use Ellipse\Dispatcher\MiddlewareProxy;
 use Ellipse\Dispatcher\MiddlewareStack;
 
-interface MiddlewareStackCallable
-{
-    public function __invoke();
-}
-
 describe('MiddlewareStack', function () {
-
-    afterEach(function () {
-
-        Mockery::close();
-
-    });
 
     context('when the list of elements is empty', function () {
 
@@ -32,7 +23,7 @@ describe('MiddlewareStack', function () {
 
                 $test = $this->stack->isEmpty();
 
-                expect($test)->to->be->true();
+                expect($test)->toBe(true);
 
             });
 
@@ -40,9 +31,11 @@ describe('MiddlewareStack', function () {
 
         describe('->head()', function () {
 
-            it('should fail', function () {
+            it('should throw RuntimeException', function () {
 
-                expect([$this->stack, 'head'])->to->throw(RuntimeException::class);
+                $test = function () { $this->stack->head(); };
+
+                expect($test)->toThrow(new RuntimeException);
 
             });
 
@@ -50,9 +43,11 @@ describe('MiddlewareStack', function () {
 
         describe('->tail()', function () {
 
-            it('should fail', function () {
+            it('should throw RuntimeException', function () {
 
-                expect([$this->stack, 'tail'])->to->throw(RuntimeException::class);
+                $test = function () { $this->stack->tail(); };
+
+                expect($test)->toThrow(new RuntimeException);
 
             });
 
@@ -64,9 +59,10 @@ describe('MiddlewareStack', function () {
 
         beforeEach(function () {
 
-            $middleware = Mockery::mock(MiddlewareInterface::class);
+            $middleware1 = mock(MiddlewareInterface::class)->get();
+            $middleware2 = mock(MiddlewareInterface::class)->get();
 
-            $this->stack = new MiddlewareStack([$middleware]);
+            $this->stack = new MiddlewareStack([$middleware1, $middleware2]);
 
         });
 
@@ -76,7 +72,7 @@ describe('MiddlewareStack', function () {
 
                 $test = $this->stack->isEmpty();
 
-                expect($test)->to->be->false();
+                expect($test)->toBe(false);
 
             });
 
@@ -88,7 +84,7 @@ describe('MiddlewareStack', function () {
 
                 $test = $this->stack->head();
 
-                expect($test)->to->be->an->instanceof(MiddlewareProxy::class);
+                expect($test)->toBeAnInstanceOf(MiddlewareProxy::class);
 
             });
 
@@ -100,8 +96,8 @@ describe('MiddlewareStack', function () {
 
                 $test = $this->stack->tail();
 
-                expect($test)->to->be->an->instanceof(MiddlewareStack::class);
-                expect($test)->to->not->be->equal($this->stack);
+                expect($test)->toBeAnInstanceOf(MiddlewareStack::class);
+                expect($test)->not->toEqual($this->stack);
 
             });
         });

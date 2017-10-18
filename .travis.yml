@@ -4,4 +4,4 @@ php:
 before_script:
   - composer self-update
   - composer install --prefer-source --no-interaction
-script: vendor/bin/peridot tests
+script: vendor/bin/kahlan --spec=tests

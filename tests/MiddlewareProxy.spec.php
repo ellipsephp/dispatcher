@@ -1,5 +1,8 @@
 <?php
 
+use function Eloquent\Phony\Kahlan\mock;
+use function Eloquent\Phony\Kahlan\stub;
+
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
@@ -9,24 +12,13 @@ use Interop\Http\Server\RequestHandlerInterface;
 use Ellipse\Dispatcher\MiddlewareProxy;
 use Ellipse\Dispatcher\Exceptions\MiddlewareResolvingException;
 
-interface MiddlewareProxyCallable
-{
-    public function __invoke();
-}
-
 describe('MiddlewareProxy', function () {
-
-    afterEach(function () {
-
-        Mockery::close();
-
-    });
 
     it('should implement MiddlewareInterface', function () {
 
         $proxy = new MiddlewareProxy('element');
 
-        expect($proxy)->to->be->an->instanceof(MiddlewareInterface::class);
+        expect($proxy)->toBeAnInstanceOf(MiddlewareInterface::class);
 
     });
 
@@ -34,31 +26,27 @@ describe('MiddlewareProxy', function () {
 
         beforeEach(function () {
 
-            $this->request = Mockery::mock(ServerRequestInterface::class);
-            $this->response = Mockery::mock(ResponseInterface::class);
-            $this->handler = Mockery::mock(RequestHandlerInterface::class);
+            $this->middleware = mock(MiddlewareInterface::class);
+
+            $this->request = mock(ServerRequestInterface::class)->get();
+            $this->response = mock(ResponseInterface::class)->get();
+            $this->handler = mock(RequestHandlerInterface::class)->get();
 
         });
 
         context('when the element is an instance of MiddlewareInterface', function () {
 
-            beforeEach(function () {
-
-                $this->middleware = Mockery::mock(MiddlewareInterface::class);
-
-                $this->proxy = new MiddlewareProxy($this->middleware);
-
-            });
-
             it('should proxy the middleware ->process() method', function () {
 
-                $this->middleware->shouldReceive('process')->once()
-                    ->with($this->request, $this->handler)
-                    ->andReturn($this->response);
+                $proxy = new MiddlewareProxy($this->middleware->get());
 
-                $test = $this->proxy->process($this->request, $this->handler);
+                $this->middleware->process->with($this->request, $this->handler)
+                    ->returns($this->response);
 
-                expect($test)->to->be->equal($this->response);
+                $test = $proxy->process($this->request, $this->handler);
+
+                expect($test)->toEqual($this->response);
+                $this->middleware->process->called();
 
             });
 
@@ -70,7 +58,7 @@ describe('MiddlewareProxy', function () {
 
                 beforeEach(function () {
 
-                    $this->resolver = Mockery::mock(MiddlewareProxyCallable::class);
+                    $this->resolver = stub();
 
                     $this->proxy = new MiddlewareProxy('element', $this->resolver);
 
@@ -78,25 +66,18 @@ describe('MiddlewareProxy', function () {
 
                 context('when the resolver resolve the element as an instance of MiddlewareInterface', function () {
 
-                    beforeEach(function () {
-
-                        $this->middleware = Mockery::mock(MiddlewareInterface::class);
-
-                        $this->resolver->shouldReceive('__invoke')->once()
-                            ->with('element')
-                            ->andReturn($this->middleware);
-
-                    });
-
                     it('should proxy the resolved middleware ->process() method', function () {
 
-                        $this->middleware->shouldReceive('process')->once()
-                            ->with($this->request, $this->handler)
-                            ->andReturn($this->response);
+                        $this->resolver->with('element')->returns($this->middleware);
+
+                        $this->middleware->process->with($this->request, $this->handler)
+                            ->returns($this->response);
 
                         $test = $this->proxy->process($this->request, $this->handler);
 
-                        expect($test)->to->be->equal($this->response);
+                        expect($test)->toEqual($this->response);
+                        $this->resolver->called();
+                        $this->middleware->process->called();
 
                     });
 
@@ -104,18 +85,18 @@ describe('MiddlewareProxy', function () {
 
                 context('when the resolver does not resolve the element as an instance of MiddlewareInterface', function () {
 
-                    beforeEach(function () {
+                    it('should throw MiddlewareResolvingException', function () {
 
-                        $this->resolver->shouldReceive('__invoke')->once()
-                            ->with('element')
-                            ->andReturn(null);
+                        $this->resolver->with('element')->returns(null);
 
-                    });
+                        $test = function () {
 
-                    it('should fail', function () {
+                            $this->proxy->process($this->request, $this->handler);
 
-                        expect([$this->proxy, 'process'])->with($this->request, $this->handler)
-                            ->to->throw(MiddlewareResolvingException::class);
+                        };
+
+                        expect($test)->toThrow(new MiddlewareResolvingException('element'));
+                        $this->resolver->called();
 
                     });
 
@@ -125,16 +106,17 @@ describe('MiddlewareProxy', function () {
 
             context('when the resolver is null', function () {
 
-                beforeEach(function () {
+                it('should throw MiddlewareResolvingException', function () {
 
-                    $this->proxy = new MiddlewareProxy('element');
+                    $proxy = new MiddlewareProxy('element');
 
-                });
+                    $test = function () use ($proxy) {
 
-                it('should fail', function () {
+                        $proxy->process($this->request, $this->handler);
 
-                    expect([$this->proxy, 'process'])->with($this->request, $this->handler)
-                        ->to->throw(MiddlewareResolvingException::class);
+                    };
+
+                    expect($test)->toThrow(new MiddlewareResolvingException('element'));
 
                 });
 

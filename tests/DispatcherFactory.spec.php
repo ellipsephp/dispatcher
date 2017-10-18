@@ -20,7 +20,7 @@ describe('DispatcherFactory', function () {
 
             $test = ($this->factory)(['middleware'], 'handler');
 
-            expect($test)->to->be->an->instanceof(Dispatcher::class);
+            expect($test)->toBeAnInstanceOf(Dispatcher::class);
 
         });
 
