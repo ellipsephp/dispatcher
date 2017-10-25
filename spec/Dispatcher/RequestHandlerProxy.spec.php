@@ -42,8 +42,7 @@ describe('RequestHandlerProxy', function () {
 
                 $test = $proxy->handle($this->request);
 
-                expect($test)->toEqual($this->response);
-                $this->handler->handle->called();
+                expect($test)->toBe($this->response);
 
             });
 
@@ -71,8 +70,7 @@ describe('RequestHandlerProxy', function () {
 
                         $test = $this->proxy->handle($this->request);
 
-                        expect($test)->toEqual($this->response);
-                        $this->resolver->called();
+                        expect($test)->toBe($this->response);
 
                     });
 
@@ -91,7 +89,6 @@ describe('RequestHandlerProxy', function () {
                         };
 
                         expect($test)->toThrow(new RequestHandlerResolvingException('element'));
-                        $this->resolver->called();
 
                     });
 

@@ -1,5 +1,7 @@
 <?php
 
+use function Eloquent\Phony\Kahlan\stub;
+
 use Ellipse\Dispatcher;
 use Ellipse\DispatcherFactory;
 
@@ -7,10 +9,7 @@ describe('DispatcherFactory', function () {
 
     beforeEach(function () {
 
-        $middleware = function () {};
-        $handler = function () {};
-
-        $this->factory = new DispatcherFactory($middleware, $handler);
+        $this->factory = new DispatcherFactory(stub(), stub());
 
     });
 

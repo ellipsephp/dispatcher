@@ -45,8 +45,7 @@ describe('MiddlewareProxy', function () {
 
                 $test = $proxy->process($this->request, $this->handler);
 
-                expect($test)->toEqual($this->response);
-                $this->middleware->process->called();
+                expect($test)->toBe($this->response);
 
             });
 
@@ -75,9 +74,7 @@ describe('MiddlewareProxy', function () {
 
                         $test = $this->proxy->process($this->request, $this->handler);
 
-                        expect($test)->toEqual($this->response);
-                        $this->resolver->called();
-                        $this->middleware->process->called();
+                        expect($test)->toBe($this->response);
 
                     });
 
@@ -96,7 +93,6 @@ describe('MiddlewareProxy', function () {
                         };
 
                         expect($test)->toThrow(new MiddlewareResolvingException('element'));
-                        $this->resolver->called();
 
                     });
 

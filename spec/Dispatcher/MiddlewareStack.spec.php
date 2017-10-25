@@ -23,7 +23,7 @@ describe('MiddlewareStack', function () {
 
                 $test = $this->stack->isEmpty();
 
-                expect($test)->toBe(true);
+                expect($test)->toBeTruthy();
 
             });
 
@@ -72,7 +72,7 @@ describe('MiddlewareStack', function () {
 
                 $test = $this->stack->isEmpty();
 
-                expect($test)->toBe(false);
+                expect($test)->toBeFalsy();
 
             });
 
@@ -97,7 +97,7 @@ describe('MiddlewareStack', function () {
                 $test = $this->stack->tail();
 
                 expect($test)->toBeAnInstanceOf(MiddlewareStack::class);
-                expect($test)->not->toEqual($this->stack);
+                expect($test)->not->toBe($this->stack);
 
             });
         });

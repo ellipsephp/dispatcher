@@ -55,8 +55,7 @@ describe('Dispatcher', function () {
 
                     $test = $this->dispatcher->handle($this->request);
 
-                    expect($test)->toEqual($this->response);
-                    $this->handler->handle->called();
+                    expect($test)->toBe($this->response);
 
                 });
 
@@ -75,7 +74,6 @@ describe('Dispatcher', function () {
                     };
 
                     expect($test)->toThrow(new InvalidReturnValueException('invalid'));
-                    $this->handler->handle->called();
 
                 });
 
@@ -105,10 +103,7 @@ describe('Dispatcher', function () {
 
                     $test = $this->dispatcher->handle($this->request);
 
-                    expect($test)->toEqual($this->response);
-                    $this->stack->head->called();
-                    $this->stack->tail->called();
-                    $this->head->process->called();
+                    expect($test)->toBe($this->response);
 
                 });
 
@@ -128,9 +123,6 @@ describe('Dispatcher', function () {
                     };
 
                     expect($test)->toThrow(new InvalidReturnValueException('invalid'));
-                    $this->stack->head->called();
-                    $this->stack->tail->called();
-                    $this->head->process->called();
 
                 });
 
