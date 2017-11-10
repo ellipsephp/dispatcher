@@ -3,6 +3,7 @@
 namespace Ellipse\Dispatcher;
 
 use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Message\ResponseInterface;
 
 use Interop\Http\Server\RequestHandlerInterface;
 
@@ -45,7 +46,7 @@ class RequestHandlerProxy implements RequestHandlerInterface
      * @return \Psr\Http\Message\ResponseInterface
      * @throws \Ellipse\Dispatcher\Exceptions\RequestHandlerResolvingException
      */
-    public function handle(ServerRequestInterface $request)
+    public function handle(ServerRequestInterface $request): ResponseInterface
     {
         if ($this->element instanceof RequestHandlerInterface) {
 

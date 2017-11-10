@@ -44,9 +44,8 @@ class Dispatcher implements RequestHandlerInterface
      *
      * @param \Psr\Http\Message\ServerRequestInterface $request
      * @return \Psr\Http\Message\ResponseInterface
-     * @throws \Ellipse\Dispatcher\Exceptions\InvalidReturnValueException
      */
-    public function handle(ServerRequestInterface $request)
+    public function handle(ServerRequestInterface $request): ResponseInterface
     {
         if (! $this->stack->isEmpty()) {
 
@@ -55,20 +54,10 @@ class Dispatcher implements RequestHandlerInterface
 
             $handler = new Dispatcher($tail, $this->handler);
 
-            $response = $head->process($request, $handler);
-
-        } else {
-
-            $response = $this->handler->handle($request);
+            return $head->process($request, $handler);
 
         }
 
-        if (! $response instanceof ResponseInterface) {
-
-            throw new InvalidReturnValueException($response);
-
-        }
-
-        return $response;
+        return $this->handler->handle($request);
     }
 }

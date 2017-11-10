@@ -3,6 +3,7 @@
 namespace Ellipse\Dispatcher;
 
 use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Message\ResponseInterface;
 
 use Interop\Http\Server\MiddlewareInterface;
 use Interop\Http\Server\RequestHandlerInterface;
@@ -47,7 +48,7 @@ class MiddlewareProxy implements MiddlewareInterface
      * @return \Psr\Http\Message\ResponseInterface
      * @throws \Ellipse\Dispatcher\Exceptions\MiddlewareResolvingException
      */
-    public function process(ServerRequestInterface $request, RequestHandlerInterface $handler)
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
         if ($this->element instanceof MiddlewareInterface) {
 

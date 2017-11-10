@@ -1,7 +1,6 @@
 <?php
 
 use function Eloquent\Phony\Kahlan\mock;
-use function Eloquent\Phony\Kahlan\anInstanceOf;
 
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -11,7 +10,6 @@ use Interop\Http\Server\RequestHandlerInterface;
 
 use Ellipse\Dispatcher;
 use Ellipse\Dispatcher\MiddlewareStack;
-use Ellipse\Dispatcher\Exceptions\InvalidReturnValueException;
 
 describe('Dispatcher', function () {
 
@@ -39,92 +37,46 @@ describe('Dispatcher', function () {
 
         });
 
-        context('when the middleware stack is empty', function () {
+        context('when the middleware stack is not empty', function () {
 
-            beforeEach(function () {
+            it('should proxy the head middleware ->process() method', function () {
 
-                $this->stack->isEmpty->returns(true);
+                $head = mock(MiddlewareInterface::class);
 
-            });
+                $this->stack->isEmpty->returns(false);
+                $this->stack->head->returns($head);
 
-            context('when the handler ->handle() method returns an implementation of ResponseInterface', function () {
+                $head->process->with($this->request, '~')->returns($this->response);
 
-                it('should return it', function () {
+                $test = $this->dispatcher->handle($this->request);
 
-                    $this->handler->handle->with($this->request)->returns($this->response);
-
-                    $test = $this->dispatcher->handle($this->request);
-
-                    expect($test)->toBe($this->response);
-
-                });
+                expect($test)->toBe($this->response);
 
             });
 
-            context('when the handler ->handle() method does not return an implementation of ResponseInterface', function () {
+            it('should create a new dispatcher with the current middleware stack tail as middleware stack', function () {
 
-                it('should throw InvalidReturnValueException', function () {
+                $tail = mock(MiddlewareInterface::class);
 
-                    $this->handler->handle->with($this->request)->returns('invalid');
+                $this->dispatcher->handle($this->request);
 
-                    $test = function () {
-
-                        $this->dispatcher->handle($this->request);
-
-                    };
-
-                    expect($test)->toThrow(new InvalidReturnValueException('invalid'));
-
-                });
+                $this->stack->tail->called();
 
             });
 
         });
 
-        context('when the middleware stack is not empty', function () {
+        context('when the middleware stack is empty', function () {
 
-            beforeEach(function () {
+            it('should proxy the handler ->handle() method', function () {
 
-                $this->head = mock(MiddlewareInterface::class);
-                $this->tail = mock(MiddlewareStack::class);
+                $this->stack->isEmpty->returns(true);
 
-                $this->stack->isEmpty->returns(false);
-                $this->stack->head->returns($this->head);
-                $this->stack->tail->returns($this->tail);
+                $this->handler->handle->with($this->request)->returns($this->response);
 
-            });
+                $test = $this->dispatcher->handle($this->request);
 
-            context('when the head middleware ->process() method returns an implementation of ResponseInterface', function () {
-
-                it('should return it', function () {
-
-                    $this->head->process->with($this->request, anInstanceOf(Dispatcher::class))
-                        ->returns($this->response);
-
-                    $test = $this->dispatcher->handle($this->request);
-
-                    expect($test)->toBe($this->response);
-
-                });
-
-            });
-
-            context('when the head middleware ->process() method does not return an implementation of ResponseInterface', function () {
-
-                it('should throw InvalidReturnValueException', function () {
-
-                    $this->head->process->with($this->request, anInstanceOf(Dispatcher::class))
-                        ->returns('invalid');
-
-                    $test = function () {
-
-                        $this->dispatcher->handle($this->request);
-
-                    };
-
-                    expect($test)->toThrow(new InvalidReturnValueException('invalid'));
-
-                });
+                expect($test)->toBe($this->response);
 
             });
 
