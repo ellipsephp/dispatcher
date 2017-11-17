@@ -8,7 +8,7 @@ It allows to use resolvers for resolving both Psr-15 middleware and Psr-15 reque
 
 **Installation** `composer require ellipse/dispatcher`
 
-**Run tests** `./vendor/bin/kahlan --spec=tests`
+**Run tests** `./vendor/bin/kahlan`
 
 - [Using the dispatcher](https://github.com/ellipsephp/dispatcher#using-the-dispatcher)
 
