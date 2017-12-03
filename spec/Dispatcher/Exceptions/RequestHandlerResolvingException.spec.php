@@ -7,7 +7,7 @@ describe('RequestHandlerResolvingException', function () {
 
     it('should implement DispatcherExceptionInterface', function () {
 
-        $test =new RequestHandlerResolvingException('invalid');
+        $test = new RequestHandlerResolvingException('invalid');
 
         expect($test)->toBeAnInstanceOf(DispatcherExceptionInterface::class);
 

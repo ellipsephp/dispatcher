@@ -8,7 +8,7 @@ class RequestHandlerResolvingException extends UnexpectedValueException implemen
 {
     public function __construct($value)
     {
-        $msg = 'This value can\'t be resolved as a Psr-15 request handler: %s.';
+        $msg = "This value can't be resolved as a Psr-15 request handler: %s.";
 
         parent::__construct(sprintf($msg, print_r($value, true)));
     }

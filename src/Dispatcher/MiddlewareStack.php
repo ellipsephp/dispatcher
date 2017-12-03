@@ -3,9 +3,10 @@
 namespace Ellipse\Dispatcher;
 
 use Traversable;
-use RuntimeException;
 
 use Interop\Http\Server\MiddlewareInterface;
+
+use Ellipse\Dispatcher\Exceptions\MiddlewareStackExhaustedException;
 
 class MiddlewareStack
 {
@@ -53,37 +54,37 @@ class MiddlewareStack
      * Return a middleware proxy wrapped around the first element.
      *
      * @return \Interop\Http\Server\MiddlewareInterface
-     * @throws \RuntimeException
+     * @throws \Ellipse\Dispatcher\Exceptions\MiddlewareStackExhaustedException
      */
     public function head(): MiddlewareInterface
     {
-        if ($this->isEmpty()) {
+        if (! $this->isEmpty()) {
 
-            throw new RuntimeException('The stack is exhausted');
+            $head = current($this->elements);
+
+            return new MiddlewareProxy($head, $this->resolver);
 
         }
 
-        $head = current($this->elements);
-
-        return new MiddlewareProxy($head, $this->resolver);
+        throw new MiddlewareStackExhaustedException;
     }
 
     /**
      * Return a new middleware stack composed of the remaining of the elements.
      *
      * @return \Ellipse\Dispatcher\MiddlewareStack
-     * @throws \RuntimeException
+     * @throws \Ellipse\Dispatcher\Exceptions\MiddlewareStackExhaustedException
      */
     public function tail(): MiddlewareStack
     {
-        if ($this->isEmpty()) {
+        if (! $this->isEmpty()) {
 
-            throw new RuntimeException('The stack is exhausted');
+            $tail = array_slice($this->elements, 1);
+
+            return new MiddlewareStack($tail, $this->resolver);
 
         }
 
-        $tail = array_slice($this->elements, 1);
-
-        return new MiddlewareStack($tail, $this->resolver);
+        throw new MiddlewareStackExhaustedException;
     }
 }

@@ -4,22 +4,47 @@ use function Eloquent\Phony\Kahlan\stub;
 
 use Ellipse\Dispatcher;
 use Ellipse\DispatcherFactory;
+use Ellipse\Dispatcher\MiddlewareStack;
+use Ellipse\Dispatcher\RequestHandlerProxy;
 
 describe('DispatcherFactory', function () {
 
-    beforeEach(function () {
-
-        $this->factory = new DispatcherFactory(stub(), stub());
-
-    });
-
     describe('->__invoke()', function () {
 
-        it('should return a new Dispatcher', function () {
+        context('when the dispatcher factory has middleware and handler resolvers', function () {
 
-            $test = ($this->factory)(['middleware'], 'handler');
+            it('should return a new Dispatcher using the resolvers', function () {
 
-            expect($test)->toBeAnInstanceOf(Dispatcher::class);
+                $middleware = stub();
+                $handler = stub();
+
+                $this->factory = new DispatcherFactory($middleware, $handler);
+
+                $test = ($this->factory)(['middleware'], 'handler');
+
+                expect($test)->toEqual(new Dispatcher(
+                    new MiddlewareStack(['middleware'], $middleware),
+                    new RequestHandlerProxy('handler', $handler)
+                ));
+
+            });
+
+        });
+
+        context('when the dispatcher factory do not have middleware and handler resolver', function () {
+
+            it('should return a new Dispatcher with no resolver', function () {
+
+                $this->factory = new DispatcherFactory;
+
+                $test = ($this->factory)(['middleware'], 'handler');
+
+                expect($test)->toEqual(new Dispatcher(
+                    new MiddlewareStack(['middleware'], null),
+                    new RequestHandlerProxy('handler', null)
+                ));
+
+            });
 
         });
 

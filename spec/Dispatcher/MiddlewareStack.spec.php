@@ -1,11 +1,13 @@
 <?php
 
+use function Eloquent\Phony\Kahlan\stub;
 use function Eloquent\Phony\Kahlan\mock;
 
 use Interop\Http\Server\MiddlewareInterface;
 
-use Ellipse\Dispatcher\MiddlewareProxy;
 use Ellipse\Dispatcher\MiddlewareStack;
+use Ellipse\Dispatcher\MiddlewareProxy;
+use Ellipse\Dispatcher\Exceptions\MiddlewareStackExhaustedException;
 
 describe('MiddlewareStack', function () {
 
@@ -31,11 +33,13 @@ describe('MiddlewareStack', function () {
 
         describe('->head()', function () {
 
-            it('should throw RuntimeException', function () {
+            it('should throw MiddlewareStackExhaustedException', function () {
 
                 $test = function () { $this->stack->head(); };
 
-                expect($test)->toThrow(new RuntimeException);
+                $exception = new MiddlewareStackExhaustedException;
+
+                expect($test)->toThrow($exception);
 
             });
 
@@ -43,11 +47,13 @@ describe('MiddlewareStack', function () {
 
         describe('->tail()', function () {
 
-            it('should throw RuntimeException', function () {
+            it('should throw MiddlewareStackExhaustedException', function () {
 
                 $test = function () { $this->stack->tail(); };
 
-                expect($test)->toThrow(new RuntimeException);
+                $exception = new MiddlewareStackExhaustedException;
+
+                expect($test)->toThrow($exception);
 
             });
 
@@ -59,10 +65,12 @@ describe('MiddlewareStack', function () {
 
         beforeEach(function () {
 
-            $middleware1 = mock(MiddlewareInterface::class)->get();
-            $middleware2 = mock(MiddlewareInterface::class)->get();
+            $this->middleware1 = mock(MiddlewareInterface::class)->get();
+            $this->middleware2 = mock(MiddlewareInterface::class)->get();
 
-            $this->stack = new MiddlewareStack([$middleware1, $middleware2]);
+            $this->resolver = stub();
+
+            $this->stack = new MiddlewareStack([$this->middleware1, $this->middleware2], $this->resolver);
 
         });
 
@@ -84,7 +92,9 @@ describe('MiddlewareStack', function () {
 
                 $test = $this->stack->head();
 
-                expect($test)->toBeAnInstanceOf(MiddlewareProxy::class);
+                $head = new MiddlewareProxy($this->middleware1, $this->resolver);
+
+                expect($test)->toEqual($head);
 
             });
 
@@ -96,7 +106,9 @@ describe('MiddlewareStack', function () {
 
                 $test = $this->stack->tail();
 
-                expect($test)->toBeAnInstanceOf(MiddlewareStack::class);
+                $tail = new MiddlewareStack([$this->middleware2], $this->resolver);
+
+                expect($test)->toEqual($tail);
                 expect($test)->not->toBe($this->stack);
 
             });

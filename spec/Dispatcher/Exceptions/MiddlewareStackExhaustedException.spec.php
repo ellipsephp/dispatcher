@@ -1,13 +1,13 @@
 <?php
 
 use Ellipse\Dispatcher\Exceptions\DispatcherExceptionInterface;
-use Ellipse\Dispatcher\Exceptions\MiddlewareResolvingException;
+use Ellipse\Dispatcher\Exceptions\MiddlewareStackExhaustedException;
 
-describe('MiddlewareResolvingException', function () {
+describe('MiddlewareStackExhaustedException', function () {
 
     it('should implement DispatcherExceptionInterface', function () {
 
-        $test = new MiddlewareResolvingException('invalid');
+        $test = new MiddlewareStackExhaustedException;
 
         expect($test)->toBeAnInstanceOf(DispatcherExceptionInterface::class);
 

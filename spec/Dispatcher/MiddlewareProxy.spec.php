@@ -92,7 +92,9 @@ describe('MiddlewareProxy', function () {
 
                         };
 
-                        expect($test)->toThrow(new MiddlewareResolvingException('element'));
+                        $exception = new MiddlewareResolvingException('element');
+
+                        expect($test)->toThrow($exception);
 
                     });
 
@@ -112,7 +114,9 @@ describe('MiddlewareProxy', function () {
 
                     };
 
-                    expect($test)->toThrow(new MiddlewareResolvingException('element'));
+                    $exception = new MiddlewareResolvingException('element');
+
+                    expect($test)->toThrow($exception);
 
                 });
 

@@ -39,14 +39,20 @@ describe('Dispatcher', function () {
 
         context('when the middleware stack is not empty', function () {
 
-            it('should proxy the head middleware ->process() method', function () {
+            beforeEach(function () {
 
-                $head = mock(MiddlewareInterface::class);
+                $this->head = mock(MiddlewareInterface::class);
+                $this->tail = mock(MiddlewareStack::class);
 
                 $this->stack->isEmpty->returns(false);
-                $this->stack->head->returns($head);
+                $this->stack->head->returns($this->head);
+                $this->stack->tail->returns($this->tail);
 
-                $head->process->with($this->request, '~')->returns($this->response);
+            });
+
+            it('should proxy the head middleware ->process() method', function () {
+
+                $this->head->process->with($this->request, '~')->returns($this->response);
 
                 $test = $this->dispatcher->handle($this->request);
 
@@ -54,13 +60,13 @@ describe('Dispatcher', function () {
 
             });
 
-            it('should create a new dispatcher with the current middleware stack tail as middleware stack', function () {
+            it('should pass the head ->process() method a new dispatcher using the middleware stack tail and the handler', function () {
 
-                $tail = mock(MiddlewareInterface::class);
+                $dispatcher = new Dispatcher($this->tail->get(), $this->handler->get());
 
                 $this->dispatcher->handle($this->request);
 
-                $this->stack->tail->called();
+                $this->head->process->calledWith($this->request, $dispatcher);
 
             });
 

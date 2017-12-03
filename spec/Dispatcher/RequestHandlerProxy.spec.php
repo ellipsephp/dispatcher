@@ -88,7 +88,9 @@ describe('RequestHandlerProxy', function () {
 
                         };
 
-                        expect($test)->toThrow(new RequestHandlerResolvingException('element'));
+                        $exception = new RequestHandlerResolvingException('element');
+
+                        expect($test)->toThrow($exception);
 
                     });
 
@@ -108,7 +110,9 @@ describe('RequestHandlerProxy', function () {
 
                     };
 
-                    expect($test)->toThrow(new RequestHandlerResolvingException('element'));
+                    $exception = new RequestHandlerResolvingException('element');
+
+                    expect($test)->toThrow($exception);
 
                 });
 
