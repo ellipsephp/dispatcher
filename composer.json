@@ -27,6 +27,7 @@
         "http-interop/http-server-middleware": "^1.0"
     },
     "require-dev": {
+        "psr/container": "^1.0",
         "kahlan/kahlan": "^4.0",
         "eloquent/phony-kahlan": "^1.0"
     },
