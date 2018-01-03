@@ -7,7 +7,7 @@ use Psr\Http\Message\ResponseInterface;
 
 use Interop\Http\Server\RequestHandlerInterface;
 
-use Ellipse\Dispatcher\Exceptions\RequestHandlerResolvingException;
+use Ellipse\Dispatcher\Exceptions\RequestHandlerTypeException;
 
 class RequestHandlerProxy implements RequestHandlerInterface
 {
@@ -34,7 +34,7 @@ class RequestHandlerProxy implements RequestHandlerInterface
      *
      * @param \Psr\Http\Message\ServerRequestInterface $request
      * @return \Psr\Http\Message\ResponseInterface
-     * @throws \Ellipse\Dispatcher\Exceptions\RequestHandlerResolvingException
+     * @throws \Ellipse\Dispatcher\Exceptions\RequestHandlerTypeException
      */
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
@@ -44,6 +44,6 @@ class RequestHandlerProxy implements RequestHandlerInterface
 
         }
 
-        throw new RequestHandlerResolvingException($this->handler);
+        throw new RequestHandlerTypeException($this->handler);
     }
 }

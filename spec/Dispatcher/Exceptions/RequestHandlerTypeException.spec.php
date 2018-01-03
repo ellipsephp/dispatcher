@@ -1,13 +1,13 @@
 <?php
 
 use Ellipse\Dispatcher\Exceptions\DispatcherExceptionInterface;
-use Ellipse\Dispatcher\Exceptions\MiddlewareResolvingException;
+use Ellipse\Dispatcher\Exceptions\RequestHandlerTypeException;
 
-describe('MiddlewareResolvingException', function () {
+describe('RequestHandlerTypeException', function () {
 
     it('should implement DispatcherExceptionInterface', function () {
 
-        $test = new MiddlewareResolvingException('invalid');
+        $test = new RequestHandlerTypeException('invalid');
 
         expect($test)->toBeAnInstanceOf(DispatcherExceptionInterface::class);
 

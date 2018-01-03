@@ -6,7 +6,7 @@ use IteratorAggregate;
 
 use Interop\Http\Server\MiddlewareInterface;
 
-use Ellipse\Dispatcher\Exceptions\MiddlewareResolvingException;
+use Ellipse\Dispatcher\Exceptions\MiddlewareTypeException;
 
 class MiddlewareProxy implements IteratorAggregate
 {
@@ -31,7 +31,7 @@ class MiddlewareProxy implements IteratorAggregate
      * This is a generator proxying the iterable list of middleware by ensuring
      * they all implement MiddlewareInterface.
      *
-     * @throws \Ellipse\Dispatcher\Exceptions\MiddlewareResolvingException
+     * @throws \Ellipse\Dispatcher\Exceptions\MiddlewareTypeException
      */
     public function getIterator()
     {
@@ -39,7 +39,7 @@ class MiddlewareProxy implements IteratorAggregate
 
             if (! $middleware instanceof MiddlewareInterface) {
 
-                throw new MiddlewareResolvingException($middleware);
+                throw new MiddlewareTypeException($middleware);
 
             }
 

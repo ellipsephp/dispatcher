@@ -5,7 +5,7 @@ use function Eloquent\Phony\Kahlan\mock;
 use Interop\Http\Server\MiddlewareInterface;
 
 use Ellipse\Dispatcher\MiddlewareProxy;
-use Ellipse\Dispatcher\Exceptions\MiddlewareResolvingException;
+use Ellipse\Dispatcher\Exceptions\MiddlewareTypeException;
 
 describe('MiddlewareProxy', function () {
 
@@ -93,7 +93,7 @@ describe('MiddlewareProxy', function () {
 
         context('when some of the items in the iterable list of middleware do not implement MiddlewareInterface', function () {
 
-            it('should throw a MiddlewareResolvingException', function () {
+            it('should throw a MiddlewareTypeException', function () {
 
                 $test = function ($middleware) {
 
@@ -105,7 +105,7 @@ describe('MiddlewareProxy', function () {
 
                     };
 
-                    $exception = new MiddlewareResolvingException('middleware2');
+                    $exception = new MiddlewareTypeException('middleware2');
 
                     expect($test)->toThrow($exception);
 

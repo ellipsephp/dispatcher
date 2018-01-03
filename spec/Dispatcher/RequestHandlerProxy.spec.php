@@ -8,7 +8,7 @@ use Psr\Http\Message\ResponseInterface;
 use Interop\Http\Server\RequestHandlerInterface;
 
 use Ellipse\Dispatcher\RequestHandlerProxy;
-use Ellipse\Dispatcher\Exceptions\RequestHandlerResolvingException;
+use Ellipse\Dispatcher\Exceptions\RequestHandlerTypeException;
 
 describe('RequestHandlerProxy', function () {
 
@@ -45,7 +45,7 @@ describe('RequestHandlerProxy', function () {
 
         context('when the request handler does not implement RequestHandlerInterface', function () {
 
-            it('should throw a RequestHandlerResolvingException', function () {
+            it('should throw a RequestHandlerTypeException', function () {
 
                 $request = mock(ServerRequestInterface::class)->get();
 
@@ -57,7 +57,7 @@ describe('RequestHandlerProxy', function () {
 
                 };
 
-                $exception = new RequestHandlerResolvingException('handler');
+                $exception = new RequestHandlerTypeException('handler');
 
                 expect($test)->toThrow($exception);
 
