@@ -2,72 +2,49 @@
 
 namespace Ellipse\Dispatcher;
 
-use Psr\Http\Message\ServerRequestInterface;
-use Psr\Http\Message\ResponseInterface;
+use IteratorAggregate;
 
 use Interop\Http\Server\MiddlewareInterface;
-use Interop\Http\Server\RequestHandlerInterface;
 
 use Ellipse\Dispatcher\Exceptions\MiddlewareResolvingException;
 
-class MiddlewareProxy implements MiddlewareInterface
+class MiddlewareProxy implements IteratorAggregate
 {
     /**
-     * The element to use as a middleware.
+     * The iterable list of middleware.
      *
-     * @var mixed
+     * @var iterable
      */
-    private $element;
+    private $middleware;
 
     /**
-     * The middleware resolver.
+     * Set up a middleware proxy with the given iterable list of middleware.
      *
-     * @var callable
+     * @param iterable $middleware
      */
-    private $resolver;
-
-    /**
-     * Set up a middleware proxy with the given element to use as a middleware
-     * and the given middleware resolver.
-     *
-     * @param mixed     $element
-     * @param callable  $resolver
-     */
-    public function __construct($element, callable $resolver = null)
+    public function __construct(iterable $middleware)
     {
-        $this->element = $element;
-        $this->resolver = $resolver;
+        $this->middleware = $middleware;
     }
 
     /**
-     * Proxy the middleware ->process() method. Resolve the element as a
-     * middleware when needed.
+     * This is a generator proxying the iterable list of middleware by ensuring
+     * they all implement MiddlewareInterface.
      *
-     * @param \Psr\Http\Message\ServerRequestInterface      $request
-     * @param \Interop\Http\Server\RequestHandlerInterface  $handler
-     * @return \Psr\Http\Message\ResponseInterface
      * @throws \Ellipse\Dispatcher\Exceptions\MiddlewareResolvingException
      */
-    public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
+    public function getIterator()
     {
-        if ($this->element instanceof MiddlewareInterface) {
+        foreach ($this->middleware as $middleware) {
 
-            return $this->element->process($request, $handler);
+            if (! $middleware instanceof MiddlewareInterface) {
 
-        }
-
-        if (! is_null($this->resolver)) {
-
-            $resolved = ($this->resolver)($this->element);
-
-            if ($resolved instanceof MiddlewareInterface) {
-
-                return $resolved->process($request, $handler);
+                throw new MiddlewareResolvingException($middleware);
 
             }
 
-        }
+            yield $middleware;
 
-        throw new MiddlewareResolvingException($this->element);
+        }
     }
 }

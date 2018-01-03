@@ -12,35 +12,25 @@ use Ellipse\Dispatcher\Exceptions\RequestHandlerResolvingException;
 class RequestHandlerProxy implements RequestHandlerInterface
 {
     /**
-     * The element to use as a request handler.
+     * The request handler.
      *
      * @var mixed
      */
-    private $element;
+    private $handler;
 
     /**
-     * The request handler resolver.
+     * Set up a request handler proxy with the given request handler.
      *
-     * @var callable
+     * @param mixed $handler
      */
-    private $resolver;
-
-    /**
-     * Set up a request handler proxy with the given element to use as a request
-     * handler and the given request handler resolver.
-     *
-     * @param mixed     $element
-     * @param callable  $resolver
-     */
-    public function __construct($element, callable $resolver = null)
+    public function __construct($handler)
     {
-        $this->element = $element;
-        $this->resolver = $resolver;
+        $this->handler = $handler;
     }
 
     /**
-     * Get a request handler by resolving the element and proxy its ->handle()
-     * method.
+     * Proxy the request handler by ensuring it implements
+     * RequestHandlerInterface.
      *
      * @param \Psr\Http\Message\ServerRequestInterface $request
      * @return \Psr\Http\Message\ResponseInterface
@@ -48,24 +38,12 @@ class RequestHandlerProxy implements RequestHandlerInterface
      */
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
-        if ($this->element instanceof RequestHandlerInterface) {
+        if ($this->handler instanceof RequestHandlerInterface) {
 
-            return $this->element->handle($request);
-
-        }
-
-        if (! is_null($this->resolver)) {
-
-            $resolved = ($this->resolver)($this->element);
-
-            if ($resolved instanceof RequestHandlerInterface) {
-
-                return $resolved->handle($request);
-
-            }
+            return $this->handler->handle($request);
 
         }
 
-        throw new RequestHandlerResolvingException($this->element);
+        throw new RequestHandlerResolvingException($this->handler);
     }
 }

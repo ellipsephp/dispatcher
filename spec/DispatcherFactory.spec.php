@@ -1,48 +1,70 @@
 <?php
 
-use function Eloquent\Phony\Kahlan\stub;
-
 use Ellipse\Dispatcher;
+use Ellipse\DispatcherFactoryInterface;
 use Ellipse\DispatcherFactory;
-use Ellipse\Dispatcher\MiddlewareStack;
+use Ellipse\Dispatcher\MiddlewareProxy;
 use Ellipse\Dispatcher\RequestHandlerProxy;
 
 describe('DispatcherFactory', function () {
 
+    beforeEach(function () {
+
+        $this->factory = new DispatcherFactory;
+
+    });
+
+    it('should implement DispatcherFactoryInterface', function () {
+
+        expect($this->factory)->toBeAnInstanceOf(DispatcherFactoryInterface::class);
+
+    });
+
     describe('->__invoke()', function () {
 
-        context('when the dispatcher factory has middleware and handler resolvers', function () {
+        context('when no iterable list of middleware is given', function () {
 
-            it('should return a new Dispatcher using the resolvers', function () {
+            it('should return a new Dispatcher with the given request handler and an empty array of middleware wrapped in proxies', function () {
 
-                $middleware = stub();
-                $handler = stub();
+                $test = ($this->factory)('handler');
 
-                $this->factory = new DispatcherFactory($middleware, $handler);
+                $dispatcher = new Dispatcher(
+                    new MiddlewareProxy([]),
+                    new RequestHandlerProxy('handler')
+                );
 
-                $test = ($this->factory)(['middleware'], 'handler');
-
-                expect($test)->toEqual(new Dispatcher(
-                    new MiddlewareStack(['middleware'], $middleware),
-                    new RequestHandlerProxy('handler', $handler)
-                ));
+                expect($test)->toEqual($dispatcher);
 
             });
 
         });
 
-        context('when the dispatcher factory do not have middleware and handler resolver', function () {
+        context('when an iterable list of middleware is given', function () {
 
-            it('should return a new Dispatcher with no resolver', function () {
+            it('should return a new Dispatcher using the given request handler and iterable list of middleware wrapped in proxies', function () {
 
-                $this->factory = new DispatcherFactory;
+                $test = function ($middleware) {
 
-                $test = ($this->factory)(['middleware'], 'handler');
+                    $test = ($this->factory)('handler', $middleware);
 
-                expect($test)->toEqual(new Dispatcher(
-                    new MiddlewareStack(['middleware'], null),
-                    new RequestHandlerProxy('handler', null)
-                ));
+                    $dispatcher = new Dispatcher(
+                        new MiddlewareProxy($middleware),
+                        new RequestHandlerProxy('handler')
+                    );
+
+                    expect($test)->toEqual($dispatcher);
+
+                };
+
+                $middleware = ['middleware1', 'middleware2'];
+
+                $test($middleware);
+                $test(new ArrayIterator($middleware));
+                $test(new class ($middleware) implements IteratorAggregate
+                {
+                    public function __construct($middleware) { $this->middleware = $middleware; }
+                    public function getIterator() { return new ArrayIterator($this->middleware); }
+                });
 
             });
 

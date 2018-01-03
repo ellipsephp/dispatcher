@@ -2,59 +2,61 @@
 
 namespace Ellipse;
 
+use Traversable;
+
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
 use Interop\Http\Server\RequestHandlerInterface;
 
-use Ellipse\Dispatcher\MiddlewareStack;
-use Ellipse\Dispatcher\Exceptions\InvalidReturnValueException;
-
 class Dispatcher implements RequestHandlerInterface
 {
     /**
-     * The middleware stack.
+     * The iterable list of middleware to dispatch.
      *
-     * @var \Ellipse\Dispatcher\MiddlewareStack
+     * @var iterable
      */
-    private $stack;
+    private $middleware;
 
     /**
-     * The request handler.
+     * The final request handler.
      *
      * @var \Psr\Http\Message\RequestHandlerInterface
      */
     private $handler;
 
     /**
-     * Sets up a dispatcher with the given middleware stack and request handler.
+     * Sets up a dispatcher with the given iterable list of middleware and
+     * request handler.
      *
-     * @param \Ellipse\Dispatcher\MiddlewareStack           $stack
+     * @param iterable                                      $middleware
      * @param \Interop\Http\Server\RequestHandlerInterface  $handler
      */
-    public function __construct(MiddlewareStack $stack, RequestHandlerInterface $handler)
+    public function __construct(iterable $middleware, RequestHandlerInterface $handler)
     {
-        $this->stack = $stack;
+        $this->middleware = $middleware;
         $this->handler = $handler;
     }
 
     /**
-     * Handle a request by processing it through all the middleware and the
-     * request handler.
+     * Handle a request by processing it through all the middleware before
+     * handling it with the final request handler.
      *
      * @param \Psr\Http\Message\ServerRequestInterface $request
      * @return \Psr\Http\Message\ResponseInterface
      */
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
-        if (! $this->stack->isEmpty()) {
+        $middleware = $this->middleware instanceof Traversable
+            ? iterator_to_array($this->middleware)
+            : $this->middleware;
 
-            $head = $this->stack->head();
-            $tail = $this->stack->tail();
+        if (count($middleware) > 0) {
 
-            $handler = new Dispatcher($tail, $this->handler);
+            $head = current($middleware);
+            $tail = array_slice($middleware, 1);
 
-            return $head->process($request, $handler);
+            return $head->process($request, new Dispatcher($tail, $this->handler));
 
         }
 

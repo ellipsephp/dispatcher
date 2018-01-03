@@ -1,123 +1,128 @@
 <?php
 
 use function Eloquent\Phony\Kahlan\mock;
-use function Eloquent\Phony\Kahlan\stub;
-
-use Psr\Http\Message\ServerRequestInterface;
-use Psr\Http\Message\ResponseInterface;
 
 use Interop\Http\Server\MiddlewareInterface;
-use Interop\Http\Server\RequestHandlerInterface;
 
 use Ellipse\Dispatcher\MiddlewareProxy;
 use Ellipse\Dispatcher\Exceptions\MiddlewareResolvingException;
 
 describe('MiddlewareProxy', function () {
 
-    it('should implement MiddlewareInterface', function () {
+    it('should be an instance of Traversable', function () {
 
-        $proxy = new MiddlewareProxy('element');
+        $test = new MiddlewareProxy(['middleware1', 'middleware2']);
 
-        expect($proxy)->toBeAnInstanceOf(MiddlewareInterface::class);
+        expect($test)->toBeAnInstanceOf(Traversable::class);
 
     });
 
-    describe('->process()', function () {
+    context('when transformed to an array via iterator_to_array()', function () {
 
-        beforeEach(function () {
+        context('when all the items in the iterable list of middleware implement MiddlewareInterface', function () {
 
-            $this->middleware = mock(MiddlewareInterface::class);
+            beforeEach(function () {
 
-            $this->request = mock(ServerRequestInterface::class)->get();
-            $this->response = mock(ResponseInterface::class)->get();
-            $this->handler = mock(RequestHandlerInterface::class)->get();
+                $this->middleware1 = mock(MiddlewareInterface::class)->get();
+                $this->middleware2 = mock(MiddlewareInterface::class)->get();
+                $this->middleware3 = mock(MiddlewareInterface::class)->get();
 
-        });
+                $this->middleware = [
+                    $this->middleware1,
+                    $this->middleware2,
+                    $this->middleware3,
+                ];
 
-        context('when the element is an instance of MiddlewareInterface', function () {
+            });
 
-            it('should proxy the middleware ->process() method', function () {
+            it('should produce an array containing all the middleware', function () {
 
-                $proxy = new MiddlewareProxy($this->middleware->get());
+                $test = function ($middleware) {
 
-                $this->middleware->process->with($this->request, $this->handler)
-                    ->returns($this->response);
+                    $proxy = new MiddlewareProxy($middleware);
 
-                $test = $proxy->process($this->request, $this->handler);
+                    $test = iterator_to_array($proxy);
 
-                expect($test)->toBe($this->response);
+                    expect($test[0])->toBe($this->middleware1);
+                    expect($test[1])->toBe($this->middleware2);
+                    expect($test[2])->toBe($this->middleware3);
+
+                };
+
+                $test($this->middleware);
+                $test(new ArrayIterator($this->middleware));
+                $test(new class ($this->middleware) implements IteratorAggregate
+                {
+                    public function __construct($middleware) { $this->middleware = $middleware; }
+                    public function getIterator() { return new ArrayIterator($this->middleware); }
+                });
+
+            });
+
+            it('should not fail when used multiple time with iterator_to_array()', function () {
+
+                $test = function ($middleware) {
+
+                    $proxy = new MiddlewareProxy($middleware);
+
+                    $test = iterator_to_array($proxy);
+
+                    expect($test[0])->toBe($this->middleware1);
+                    expect($test[1])->toBe($this->middleware2);
+                    expect($test[2])->toBe($this->middleware3);
+
+                    $test = iterator_to_array($proxy);
+
+                    expect($test[0])->toBe($this->middleware1);
+                    expect($test[1])->toBe($this->middleware2);
+                    expect($test[2])->toBe($this->middleware3);
+
+                };
+
+                $test($this->middleware);
+                $test(new ArrayIterator($this->middleware));
+                $test(new class ($this->middleware) implements IteratorAggregate
+                {
+                    public function __construct($middleware) { $this->middleware = $middleware; }
+                    public function getIterator() { return new ArrayIterator($this->middleware); }
+                });
 
             });
 
         });
 
-        context('when the element is not an instance of MiddlewareInterface', function () {
+        context('when some of the items in the iterable list of middleware do not implement MiddlewareInterface', function () {
 
-            context('when the resolver is not null', function () {
+            it('should throw a MiddlewareResolvingException', function () {
 
-                beforeEach(function () {
+                $test = function ($middleware) {
 
-                    $this->resolver = stub();
+                    $test = function () use ($middleware) {
 
-                    $this->proxy = new MiddlewareProxy('element', $this->resolver);
+                        $proxy = new MiddlewareProxy($middleware);
 
-                });
-
-                context('when the resolver resolve the element as an instance of MiddlewareInterface', function () {
-
-                    it('should proxy the resolved middleware ->process() method', function () {
-
-                        $this->resolver->with('element')->returns($this->middleware);
-
-                        $this->middleware->process->with($this->request, $this->handler)
-                            ->returns($this->response);
-
-                        $test = $this->proxy->process($this->request, $this->handler);
-
-                        expect($test)->toBe($this->response);
-
-                    });
-
-                });
-
-                context('when the resolver does not resolve the element as an instance of MiddlewareInterface', function () {
-
-                    it('should throw MiddlewareResolvingException', function () {
-
-                        $this->resolver->with('element')->returns(null);
-
-                        $test = function () {
-
-                            $this->proxy->process($this->request, $this->handler);
-
-                        };
-
-                        $exception = new MiddlewareResolvingException('element');
-
-                        expect($test)->toThrow($exception);
-
-                    });
-
-                });
-
-            });
-
-            context('when the resolver is null', function () {
-
-                it('should throw MiddlewareResolvingException', function () {
-
-                    $proxy = new MiddlewareProxy('element');
-
-                    $test = function () use ($proxy) {
-
-                        $proxy->process($this->request, $this->handler);
+                        $test = iterator_to_array($proxy);
 
                     };
 
-                    $exception = new MiddlewareResolvingException('element');
+                    $exception = new MiddlewareResolvingException('middleware2');
 
                     expect($test)->toThrow($exception);
 
+                };
+
+                $middleware = [
+                    mock(MiddlewareInterface::class)->get(),
+                    'middleware2',
+                    mock(MiddlewareInterface::class)->get(),
+                ];
+
+                $test($middleware);
+                $test(new ArrayIterator($middleware));
+                $test(new class ($middleware) implements IteratorAggregate
+                {
+                    public function __construct($middleware) { $this->middleware = $middleware; }
+                    public function getIterator() { return new ArrayIterator($this->middleware); }
                 });
 
             });

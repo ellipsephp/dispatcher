@@ -9,22 +9,20 @@ use Interop\Http\Server\MiddlewareInterface;
 use Interop\Http\Server\RequestHandlerInterface;
 
 use Ellipse\Dispatcher;
-use Ellipse\Dispatcher\MiddlewareStack;
 
 describe('Dispatcher', function () {
 
     beforeEach(function () {
 
-        $this->stack = mock(MiddlewareStack::class);
         $this->handler = mock(RequestHandlerInterface::class);
-
-        $this->dispatcher = new Dispatcher($this->stack->get(), $this->handler->get());
 
     });
 
     it('should implement RequestHandlerInterface', function () {
 
-        expect($this->dispatcher)->toBeAnInstanceOf(RequestHandlerInterface::class);
+        $test = new Dispatcher([], $this->handler->get());
+
+        expect($test)->toBeAnInstanceOf(RequestHandlerInterface::class);
 
     });
 
@@ -37,52 +35,102 @@ describe('Dispatcher', function () {
 
         });
 
-        context('when the middleware stack is not empty', function () {
+        context('when the given iterable list of middleware is not empty', function () {
 
             beforeEach(function () {
 
-                $this->head = mock(MiddlewareInterface::class);
-                $this->tail = mock(MiddlewareStack::class);
-
-                $this->stack->isEmpty->returns(false);
-                $this->stack->head->returns($this->head);
-                $this->stack->tail->returns($this->tail);
+                $this->middleware1 = mock(MiddlewareInterface::class);
+                $this->middleware2 = mock(MiddlewareInterface::class);
 
             });
 
-            it('should proxy the head middleware ->process() method', function () {
+            it('should proxy the first middleware ->process() method with the given request', function () {
 
-                $this->head->process->with($this->request, '~')->returns($this->response);
+                $test = function ($middleware) {
 
-                $test = $this->dispatcher->handle($this->request);
+                    $dispatcher = new Dispatcher($middleware, $this->handler->get());
 
-                expect($test)->toBe($this->response);
+                    $this->middleware1->process->with($this->request, '~')->returns($this->response);
+
+                    $test = $dispatcher->handle($this->request);
+
+                    expect($test)->toBe($this->response);
+
+                };
+
+                $middleware = [
+                    $this->middleware1->get(),
+                    $this->middleware2->get(),
+                ];
+
+                $test($middleware);
+                $test(new ArrayIterator($middleware));
+                $test(new class ($middleware) implements IteratorAggregate
+                {
+                    public function __construct($middleware) { $this->middleware = $middleware; }
+                    public function getIterator() { return new ArrayIterator($this->middleware); }
+                });
 
             });
 
-            it('should pass the head ->process() method a new dispatcher using the middleware stack tail and the handler', function () {
+            it('should proxy the first middleware ->process() method with a new Dispatcher dispatching the remaining middleware', function () {
 
-                $dispatcher = new Dispatcher($this->tail->get(), $this->handler->get());
+                $test = function ($middleware1, $middleware2) {
 
-                $this->dispatcher->handle($this->request);
+                    $dispatcher1 = new Dispatcher($middleware1, $this->handler->get());
+                    $dispatcher2 = new Dispatcher($middleware2, $this->handler->get());
 
-                $this->head->process->calledWith($this->request, $dispatcher);
+                    $this->middleware1->process->with('~', $dispatcher2)->returns($this->response);
+
+                    $test = $dispatcher1->handle($this->request);
+
+                    expect($test)->toBe($this->response);
+
+                };
+
+                $middleware1 = [
+                    $this->middleware1->get(),
+                    $this->middleware2->get(),
+                ];
+
+                $middleware2 = [
+                    $this->middleware2->get(),
+                ];
+
+                $test($middleware1, $middleware2);
+                $test(new ArrayIterator($middleware1), $middleware2);
+                $test(new class ($middleware1) implements IteratorAggregate
+                {
+                    public function __construct($middleware1) { $this->middleware1 = $middleware1; }
+                    public function getIterator() { return new ArrayIterator($this->middleware1); }
+                }, $middleware2);
 
             });
 
         });
 
-        context('when the middleware stack is empty', function () {
+        context('when the given iterable list of middleware is empty', function () {
 
             it('should proxy the handler ->handle() method', function () {
 
-                $this->stack->isEmpty->returns(true);
+                $test = function ($empty) {
 
-                $this->handler->handle->with($this->request)->returns($this->response);
+                    $dispatcher = new Dispatcher($empty, $this->handler->get());
 
-                $test = $this->dispatcher->handle($this->request);
+                    $this->handler->handle->with($this->request)->returns($this->response);
 
-                expect($test)->toBe($this->response);
+                    $test = $dispatcher->handle($this->request);
+
+                    expect($test)->toBe($this->response);
+
+                };
+
+                $test([]);
+                $test(new ArrayIterator([]));
+                $test(new class implements IteratorAggregate
+                {
+                    public function getIterator() { return new ArrayIterator([]); }
+                });
 
             });
 

@@ -1,7 +1,6 @@
 <?php
 
 use function Eloquent\Phony\Kahlan\mock;
-use function Eloquent\Phony\Kahlan\stub;
 
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -15,106 +14,52 @@ describe('RequestHandlerProxy', function () {
 
     it('should implement RequestHandlerInterface', function () {
 
-        $proxy = new RequestHandlerProxy('element');
+        $test = new RequestHandlerProxy('handler');
 
-        expect($proxy)->toBeAnInstanceOf(RequestHandlerInterface::class);
+        expect($test)->toBeAnInstanceOf(RequestHandlerInterface::class);
 
     });
 
     describe('->handle()', function () {
 
-        beforeEach(function () {
+        context('when the request handler implement RequestHandlerInterface', function () {
 
-            $this->handler = mock(RequestHandlerInterface::class);
+            it('should proxy the request handler', function () {
 
-            $this->request = mock(ServerRequestInterface::class)->get();
-            $this->response = mock(ResponseInterface::class)->get();
+                $request = mock(ServerRequestInterface::class)->get();
+                $response = mock(ResponseInterface::class)->get();
 
-        });
+                $handler = mock(RequestHandlerInterface::class);
 
-        context('when the element is an instance of RequestHandlerInterface', function () {
+                $proxy = new RequestHandlerProxy($handler->get());
 
-            it('should proxy the handler ->handle() method', function () {
+                $handler->handle->with($request)->returns($response);
 
-                $proxy = new RequestHandlerProxy($this->handler->get());
+                $test = $proxy->handle($request);
 
-                $this->handler->handle->with($this->request)->returns($this->response);
-
-                $test = $proxy->handle($this->request);
-
-                expect($test)->toBe($this->response);
+                expect($test)->toBe($response);
 
             });
 
         });
 
-        context('when the element is not an instance of RequestHandlerInterface', function () {
+        context('when the request handler does not implement RequestHandlerInterface', function () {
 
-            context('when the resolver is not null', function () {
+            it('should throw a RequestHandlerResolvingException', function () {
 
-                beforeEach(function () {
+                $request = mock(ServerRequestInterface::class)->get();
 
-                    $this->resolver = stub();
+                $proxy = new RequestHandlerProxy('handler');
 
-                    $this->proxy = new RequestHandlerProxy('element', $this->resolver);
+                $test = function () use ($request, $proxy) {
 
-                });
+                    $proxy->handle($request);
 
-                context('when the resolver resolve the element as an instance of RequestHandlerInterface', function () {
+                };
 
-                    it('should proxy the resolved handler ->handle() method', function () {
+                $exception = new RequestHandlerResolvingException('handler');
 
-                        $this->resolver->with('element')->returns($this->handler);
-
-                        $this->handler->handle->with($this->request)->returns($this->response);
-
-                        $test = $this->proxy->handle($this->request);
-
-                        expect($test)->toBe($this->response);
-
-                    });
-
-                });
-
-                context('when the resolver does not resolve the element as an instance of RequestHandlerInterface', function () {
-
-                    it('should throw RequestHandlerResolvingException', function () {
-
-                        $this->resolver->with('element')->returns(null);
-
-                        $test = function () {
-
-                            $this->proxy->handle($this->request);
-
-                        };
-
-                        $exception = new RequestHandlerResolvingException('element');
-
-                        expect($test)->toThrow($exception);
-
-                    });
-
-                });
-
-            });
-
-            context('when the resolver is null', function () {
-
-                it('should throw RequestHandlerResolvingException', function () {
-
-                    $proxy = new RequestHandlerProxy('element');
-
-                    $test = function () use ($proxy) {
-
-                        $proxy->handle($this->request);
-
-                    };
-
-                    $exception = new RequestHandlerResolvingException('element');
-
-                    expect($test)->toThrow($exception);
-
-                });
+                expect($test)->toThrow($exception);
 
             });
 

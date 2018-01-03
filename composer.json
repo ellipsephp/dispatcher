@@ -1,10 +1,11 @@
 {
     "name": "ellipse/dispatcher",
     "type": "library",
-    "description": "Psr-15 middleware dispatcher with middleware and request handler resolving feature",
+    "description": "Psr-15 middleware dispatcher implementation",
     "keywords": [
         "Psr-15",
         "middleware",
+        "request-handler",
         "dispatcher"
     ],
     "license": "MIT",
@@ -28,13 +29,6 @@
     "require-dev": {
         "kahlan/kahlan": "^4.0",
         "eloquent/phony-kahlan": "^1.0"
-    },
-    "suggest": {
-        "ellipse/middleware-callable": "Allows to use callables as middleware",
-        "ellipse/middleware-container": "Allows to use class names as middleware",
-        "ellipse/handlers-callable": "Allows to use callables as request handlers",
-        "ellipse/handlers-container": "Allows to use class names as request handlers",
-        "ellipse/handlers-action": "Allows to use action strings as request handlers"
     },
     "autoload": {
         "psr-4": {
