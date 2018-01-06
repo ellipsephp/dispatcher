@@ -21,7 +21,7 @@ This package provides an `Ellipse\Dispatcher` class allowing to process a Psr-7 
 
 The `Dispatcher` itself implements `Interop\Http\Server\RequestHandlerInterface` so a Psr-7 response is produced by using its `->handle()` method with a Psr-7 request. It also means it can be used as the request handler of another `Dispatcher`.
 
-The same `Dispatcher` can be used multiple times to handle as many request as needed. The only exception is when creating a `Dispatcher` using a php `Generator` as iterable list of middleware: it could only be used one time because a php `Generator` can't be rewinded.
+The same `Dispatcher` can be used multiple times to handle as many request as needed. The only exception is when creating a `Dispatcher` using a php `Generator` as list of middleware: it could only be used one time because a php `Generator` can't be rewinded.
 
 ```php
 <?php
@@ -35,9 +35,9 @@ $request = some_psr7_request_factory();
 
 // Create a dispatcher using two middleware and a request handler.
 $dispatcher = new Dispatcher([
-    new App\Middleware\SomeMiddleware1,
-    new App\Middleware\SomeMiddleware2,
-], new App\Handlers\SomeRequestHandler);
+    new SomeMiddleware1,
+    new SomeMiddleware2,
+], new SomeRequestHandler);
 
 // Produce a response using the dispatcher.
 // The request goes through SomeMiddleware1, SomeMiddleware2 and SomeRequestHandler.
@@ -45,14 +45,14 @@ $response = $dispatcher->handle($request);
 
 // It can be used as the request handler of another dispatcher.
 // The request goes through SomeMiddleware3, SomeMiddleware1, SomeMiddleware2 and SomeRequestHandler
-(new Dispatcher([new App\Middleware\SomeMiddleware3], $dispatcher))->handle($request);
+(new Dispatcher([new SomeMiddleware3], $dispatcher))->handle($request);
 ```
 
 ## Middleware and request handler resolving
 
 A common practice is to allow callables and class names registered in a container to be used as regular Psr-15 middleware/request handler.
 
-For this purpose this package also provides an `Ellipse\DispatcherFactory` class allowing to produce `Dispatcher` instances using any value as middleware/request handler. Exceptions are thrown if those values are not Psr-15 middleware/request handler when the `->handle()` method of the produced `Dispatcher` is called.
+For this purpose this package also provides an `Ellipse\DispatcherFactory` class allowing to produce `Dispatcher` instances using any value as middleware/request handler. Exceptions are thrown if those values are not actual Psr-15 middleware/request handler at the time the `->handle()` method of the produced `Dispatcher` use them.
 
 ```php
 <?php
@@ -82,9 +82,9 @@ $dispatcher2->handle($request);
 
 So what's the point you may ask.
 
-The point of `DispatcherFactory` is to be decorated by other factories resolving the given values as Psr-15 middleware/request handler before delegating the dispatcher creation to the original `DispatcherFactory`. It is a starting point for factory decorators (also called resolvers) which ensure the produced dispatcher would fail nicely when some values are not resolved as a Psr-15 instance.
+The point of `DispatcherFactory` is to be decorated by other factories resolving the given values as Psr-15 middleware/request handler before delegating the dispatcher creation to the original `DispatcherFactory`. It is a starting point for factory decorators (also called resolvers) which ensure the produced dispatcher would fail nicely when some values are not resolved as Psr-15 instances.
 
-It is recommended for those factory decorators to implement `Ellipse\DispatcherFactoryInterface` so they all have the same `->__invoke()` method signature.
+It is recommended for those factory decorators to implement `Ellipse\DispatcherFactoryInterface` so they can also be decorated by other decorators.
 
 Here is an example of callable resolving using the `Ellipse\Dispatcher\CallableResolver` class from the [ellipse/dispatcher-callable](https://github.com/ellipsephp/dispatcher-callable) package:
 
@@ -115,7 +115,7 @@ $handler = function ($request) {
 
 };
 
-$dispatcher = $factory([$middleware, new SomeMiddleware], $handler);
+$dispatcher = $factory($handler, [$middleware, new SomeMiddleware]);
 
 // This works :-)
 $dispatcher->handle($request);
@@ -252,4 +252,44 @@ $r->group('/group2', function ($r) use ($factory) {
     ]));
 
 });
+```
+
+Of course, `ComposableResolver` can decorate any instance implementing `DispatcherFactoryInterface`. For example with the `CallableResolver` class from the [ellipse/dispatcher-callable](https://github.com/ellipsephp/dispatcher-callable) package:
+
+```php
+<?php
+
+namespace App;
+
+use FastRoute\RouteCollector;
+
+use Ellipse\DispatcherFactory;
+use Ellipse\Dispatcher\ComposableResolver;
+use Ellipse\Dispatcher\CallableResolver;
+
+// Create a new ComposableResolver resolving callables.
+$factory = new ComposableResolver(
+    new CallableResolver(
+        new DispatcherFactory
+    )
+);
+
+// Create a new FastRoute route collector.
+$r = new RouteCollector(...);
+
+// Callables can be used as psr-15 middleware.
+$factory = $factory->with([
+    function ($request, $handler) {
+
+        // This callable behave like a Psr-15 middleware.
+
+    },
+]);
+
+// Callables can be used as request handlers too.
+$r->get('/', $factory(function ($request) {
+
+    // This callable behave like a Psr-15 request handler.
+
+}))
 ```
