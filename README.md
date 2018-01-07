@@ -121,7 +121,13 @@ $dispatcher = $factory($handler, [$middleware, new SomeMiddleware]);
 $dispatcher->handle($request);
 ```
 
-There will soon be an ellipse package for every common resolving scenario. Then it will be up to you to build the dispatcher factory you want.
+Here is some ellipse packages providing resolvers for common resolving scenario:
+
+- [ellipse/dispatcher-callable](https://github.com/ellipsephp/dispatcher-callable) allowing to use callables as Psr-15 instances
+- [ellipse/dispatcher-container](https://github.com/ellipsephp/dispatcher-container) allowing to use Psr-15 instances retrieved from a [Psr-11 container](http://www.php-fig.org/psr/psr-11/meta/) using their class names
+- [ellipse/dispatcher-controller](https://github.com/ellipsephp/dispatcher-controller) allowing to use controller definitions as Psr-15 request handler
+
+Then it is up to you to build the dispatcher factory you need.
 
 ## Composing a dispatcher
 

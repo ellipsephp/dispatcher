@@ -34,5 +34,10 @@
         "psr-4": {
             "Ellipse\\": "src"
         }
+    },
+    "suggest": {
+        "ellipse/dispatcher-callable": "Allows to use callables as Psr-15 instances",
+        "ellipse/dispatcher-container": "Allows to use Psr-15 instances retrieved from a Psr-11 container using their class names",
+        "ellipse/dispatcher-controller": "Allows to use controller definitions as Psr-15 request handler"
     }
 }
