@@ -9,6 +9,7 @@ This package provides a basic **[Psr-15 middleware](https://github.com/http-inte
 **Run tests** `./vendor/bin/kahlan`
 
 - [Getting started](https://github.com/ellipsephp/dispatcher#getting-started)
+- [Using a fallback response](https://github.com/ellipsephp/dispatcher#using-a-fallback-response)
 - [Middleware and request handler resolving](https://github.com/ellipsephp/dispatcher#middleware-and-request-handler-resolving)
 - [Composing a dispatcher](https://github.com/ellipsephp/dispatcher#composing-a-dispatcher)
 
@@ -48,11 +49,41 @@ $response = $dispatcher->handle($request);
 (new Dispatcher([new SomeMiddleware3], $dispatcher))->handle($request);
 ```
 
+## Using a fallback response
+
+A common practice is to define a fallback Psr-7 response when no middleware can produce a response on its own. It can be achieved by using a request handler taking this default Psr-7 response as parameter and returning it when its `->handle()` method is called. In order to spare the developper the creation of such a basic request handler, this package provides an `Ellipse\Dispatcher\FallbackResponse` class implementing this logic.
+
+```php
+<?php
+
+namespace App;
+
+use Ellipse\Dispatcher;
+use Ellipse\Dispatcher\FallbackResponse;
+
+// Get some incoming Psr-7 request.
+$request = some_psr7_request_factory();
+
+// Get some fallback Psr-7 response, here with a 404 status code.
+$response = some_psr7_response_factory()->withStatus(404);
+
+// Create a dispatcher using two middleware and a fallback response as request handler.
+$dispatcher = new Dispatcher([
+    new SomeMiddleware1,
+    new SomeMiddleware2,
+], new FallbackResponse($response));
+
+// Produce a response using the dispatcher.
+// The request goes through SomeMiddleware1, SomeMiddleware2 then the fallback response is
+// returned when none of them return a response on its own.
+$response = $dispatcher->handle($request);
+```
+
 ## Middleware and request handler resolving
 
-A common practice is to allow callables and class names registered in a container to be used as regular Psr-15 middleware/request handler.
+Another common practice is to allow callables and class names registered in a container to be used as regular Psr-15 middleware/request handler.
 
-For this purpose this package also provides an `Ellipse\DispatcherFactory` class allowing to produce `Dispatcher` instances using any value as middleware/request handler. Exceptions are thrown if those values are not actual Psr-15 middleware/request handler at the time the `->handle()` method of the produced `Dispatcher` use them.
+For this purpose this package also provides an `Ellipse\DispatcherFactory` class allowing to produce `Dispatcher` instances using any value as middleware/request handler. Exceptions are thrown when those values are not actual Psr-15 middleware/request handler at the time the produced `Dispatcher` use them.
 
 ```php
 <?php
@@ -82,9 +113,9 @@ $dispatcher2->handle($request);
 
 So what's the point you may ask.
 
-The point of `DispatcherFactory` is to be decorated by other factories resolving the given values as Psr-15 middleware/request handler before delegating the dispatcher creation to the original `DispatcherFactory`. It is a starting point for factory decorators (also called resolvers) which ensure the produced dispatcher would fail nicely when some values are not resolved as Psr-15 instances.
+The point of `DispatcherFactory` is to be decorated by other factories resolving the given values as Psr-15 middleware/request handler before delegating the dispatcher creation to the original `DispatcherFactory`. It is a starting point for such factory decorators (also called resolvers) which ensure the produced dispatcher would fail nicely when some values are not resolved as Psr-15 instances.
 
-It is recommended for those factory decorators to implement `Ellipse\DispatcherFactoryInterface` so they can also be decorated by other decorators.
+It is recommended for factory decorators to implement `Ellipse\DispatcherFactoryInterface` so they can also be decorated by other decorators.
 
 Here is an example of callable resolving using the `Ellipse\Dispatcher\CallableResolver` class from the [ellipse/dispatcher-callable](https://github.com/ellipsephp/dispatcher-callable) package:
 
