@@ -28,7 +28,7 @@ The same `Dispatcher` can be used multiple times to handle as many request as ne
 
 The middleware from the list are treated as a queue (first in first out) so the first middleware in the list is the first to process the request.
 
-Finally if a middleware from the given list is not an implementation of `MiddlewareInterface` an `Ellipse\Dispatcher\Exceptions\MiddlewareTypeException` is thrown. You can use a [factory decorators](https://github.com/ellipsephp/dispatcher#middleware-and-request-handler-resolving) to resolve some type of values as Psr-15 middleware.
+Finally if a middleware from the given list is not an implementation of `MiddlewareInterface` an `Ellipse\Dispatcher\Exceptions\MiddlewareTypeException` is thrown. You can use [factory decorators](https://github.com/ellipsephp/dispatcher#middleware-and-request-handler-resolving) to resolve some type of values as Psr-15 middleware.
 
 ```php
 <?php
@@ -56,7 +56,7 @@ $response = $dispatcher->handle($request);
 new Dispatcher(new SomeRequestHandler, [new SomeMiddleware, 'something']);
 ```
 
-The `Dispatcher` class also have a `->with()` method taking an implementation of `MiddlewareInterface` as parameter. It returns a new dispatcher with the given middleware wrapped around the previous one. Be careful the new middleware will be the first processed by the new dispatcher:
+The `Dispatcher` class also has a `->with()` method taking an implementation of `MiddlewareInterface` as parameter. It returns a new dispatcher with the given middleware wrapped around the current dispatcher. Be careful the new middleware will be the first processed by the new dispatcher:
 
 ```php
 <?php
@@ -115,8 +115,7 @@ $dispatcher = new Dispatcher(new FallbackResponse($response), [
     new SomeMiddleware2,
 ]);
 
-// The request goes through SomeMiddleware1, SomeMiddleware2 then the fallback response is
-// returned when none of them return a response on its own.
+// The request goes through SomeMiddleware1, SomeMiddleware2 then the fallback response is returned when none of them return a response on its own.
 $response = $dispatcher->handle($request);
 ```
 
@@ -124,7 +123,7 @@ $response = $dispatcher->handle($request);
 
 Another common practice is to allow callables and class names registered in a container to be used as regular Psr-15 middleware/request handler.
 
-For this purpose this package also provides an `Ellipse\DispatcherFactory` class allowing to produce `Dispatcher` instances. Its `__invoke()` method takes any value as request handler and an optional iterable list of middleware. An `Ellipse\Dispatcher\Exceptions\RequestHandlerTypeException` exception is thrown when the given request handler is not an implementation of `RequestHandlerInterface`.
+For this purpose this package also provides an `Ellipse\DispatcherFactory` class allowing to produce `Dispatcher` instances. Its `__invoke()` method takes any value as request handler and an optional iterable list of middleware. If a middleware from the given list is not an implementation of `MiddlewareInterface` or the given request handler is not an implementation of `RequestHandlerInterface`, an `Ellipse\Dispatcher\Exceptions\DispatcherCreationException` is thrown.
 
 ```php
 <?php
@@ -142,13 +141,16 @@ $factory = new DispatcherFactory;
 // Use the factory to create a new Dispatcher
 $dispatcher = $factory(new SomeRequestHandler, [new SomeMiddleware]);
 
-// The request handler can be any value but a RequestHandlerTypeException is thrown when it is not an implementation of RequestHandlerInterface.
+// Middleware can be any value but a DispatcherCreationException is thrown when one of them is not an implementation of MiddlewareInterface.
+$dispatcher = $factory(new SomeRequestHandler, [new SomeMiddleware, 'something']);
+
+// The request handler can be any value but a DispatcherCreationException is thrown when it is not an implementation of RequestHandlerInterface.
 $dispatcher = $factory('something', [new SomeMiddleware]);
 ```
 
 So what's the point of all this you may ask.
 
-The point of `DispatcherFactory` is to be decorated by other factories resolving the given values as Psr-15 middleware/request handler before delegating the dispatcher creation to the decorated `DispatcherFactoryInterface` until it hits the original `DispatcherFactory`. It is a starting point for such factory decorators (also called resolvers) which ensure the `Dispatcher` creation fails when the request handler is not resolved as a Psr-15 request handler by any decorators.
+The point of `DispatcherFactory` is to be decorated by other factories resolving the given values as Psr-15 middleware/request handler before delegating the dispatcher creation to the decorated `DispatcherFactoryInterface` until it hits the original `DispatcherFactory`. It is a starting point for such factory decorators (also called resolvers) which ensure the `Dispatcher` creation fails nicely when any value is not resolved as a Psr-15 middleware/request handler by any decorators.
 
 Also don't forget implementations of `Traversable` can be used as middleware list so it is easy to wrap the given list inside an iterator resolving them on the fly.
 
@@ -181,10 +183,8 @@ $handler = function ($request) {
 
 };
 
-$dispatcher = $factory($handler, [$middleware, new SomeMiddleware]);
-
 // This works :-)
-$dispatcher->handle($request);
+$response = $factory($handler, [$middleware, new SomeMiddleware])->handle($request);
 ```
 
 Here is some ellipse packages providing resolvers for common resolving scenario:
