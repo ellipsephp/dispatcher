@@ -6,19 +6,19 @@ use TypeError;
 
 use Interop\Http\Server\RequestHandlerInterface;
 
-use Ellipse\Dispatcher\Exceptions\RequestHandlerTypeException;
+use Ellipse\Dispatcher\Exceptions\DispatcherCreationException;
 
 class DispatcherFactory implements DispatcherFactoryInterface
 {
     /**
      * Return a new Dispatcher using the given request handler and iterable
-     * middleware queue. Ensure the given request handler is an implementation
-     * of RequestHandlerInterface.
+     * middleware queue. Catch any middleware or request handler type error and
+     * rethrow them wrapped around a dispatcher creation exception.
      *
      * @param mixed     $handler
      * @param iterable  $middleware
      * @return \Ellipse\Dispatcher
-     * @throws \Ellipse\Dispatcher\Exceptions\RequestHandlerTypeException
+     * @throws \Ellipse\Dispatcher\Exceptions\DispatcherCreationException
      */
     public function __invoke($handler, iterable $middleware = []): Dispatcher
     {
@@ -30,7 +30,7 @@ class DispatcherFactory implements DispatcherFactoryInterface
 
         catch (TypeError $e) {
 
-            throw new RequestHandlerTypeException($handler, $e);
+            throw new DispatcherCreationException($e);
 
         }
     }

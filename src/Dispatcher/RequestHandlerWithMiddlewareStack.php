@@ -16,6 +16,7 @@ class RequestHandlerWithMiddlewareStack extends AbstractRequestHandlerProxy
      *
      * @param \Interop\Http\Server\RequestHandlerInterface  $delegate
      * @param array                                         $middleware
+     * @throws \Ellipse\Dispatcher\Exceptions\MiddlewareTypeException
      */
     public function __construct(RequestHandlerInterface $delegate, array $middleware)
     {

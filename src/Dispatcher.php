@@ -9,6 +9,7 @@ use Interop\Http\Server\RequestHandlerInterface;
 
 use Ellipse\Dispatcher\RequestHandlerWithMiddleware;
 use Ellipse\Dispatcher\RequestHandlerWithMiddlewareQueue;
+use Ellipse\Dispatcher\Exceptions\MiddlewareTypeException;
 
 class Dispatcher extends RequestHandlerWithMiddlewareQueue
 {
@@ -18,12 +19,23 @@ class Dispatcher extends RequestHandlerWithMiddlewareQueue
      *
      * @param \Interop\Http\Server\RequestHandlerInterface  $handler
      * @param iterable                                      $middleware
+     * @throws \Ellipse\Dispatcher\Exceptions\MiddlewareTypeException
      */
     public function __construct(RequestHandlerInterface $handler, iterable $middleware = [])
     {
-        parent::__construct($handler, $middleware instanceof Traversable
-            ? iterator_to_array($middleware)
-            : $middleware);
+        try {
+
+            parent::__construct($handler, $middleware instanceof Traversable
+                ? iterator_to_array($middleware)
+                : $middleware);
+
+        }
+
+        catch (MiddlewareTypeException $e) {
+
+            throw $e;
+
+        }
     }
 
     /**

@@ -8,7 +8,7 @@ use Interop\Http\Server\RequestHandlerInterface;
 use Ellipse\Dispatcher;
 use Ellipse\DispatcherFactoryInterface;
 use Ellipse\DispatcherFactory;
-use Ellipse\Dispatcher\Exceptions\RequestHandlerTypeException;
+use Ellipse\Dispatcher\Exceptions\DispatcherCreationException;
 
 describe('DispatcherFactory', function () {
 
@@ -50,29 +50,54 @@ describe('DispatcherFactory', function () {
 
             context('when an iterable middleware queue is given', function () {
 
-                it('should return a new Dispatcher using the given request handler iterable middleware queue', function () {
+                context('when all the middleware in the given middleware queue implements MiddlewareInterface', function () {
 
-                    $test = function ($middleware) {
+                    it('should return a new Dispatcher using the given request handler iterable middleware queue', function () {
 
-                        $test = ($this->factory)($this->handler, $middleware);
+                        $test = function ($middleware) {
 
-                        $dispatcher = new Dispatcher($this->handler, $middleware);
+                            $test = ($this->factory)($this->handler, $middleware);
 
-                        expect($test)->toEqual($dispatcher);
+                            $dispatcher = new Dispatcher($this->handler, $middleware);
 
-                    };
+                            expect($test)->toEqual($dispatcher);
 
-                    $middleware = [
-                        mock(MiddlewareInterface::class)->get(),
-                        mock(MiddlewareInterface::class)->get(),
-                    ];
+                        };
 
-                    $test($middleware);
-                    $test(new ArrayIterator($middleware));
-                    $test(new class ($middleware) implements IteratorAggregate
-                    {
-                        public function __construct($middleware) { $this->middleware = $middleware; }
-                        public function getIterator() { return new ArrayIterator($this->middleware); }
+                        $middleware = [
+                            mock(MiddlewareInterface::class)->get(),
+                            mock(MiddlewareInterface::class)->get(),
+                        ];
+
+                        $test($middleware);
+                        $test(new ArrayIterator($middleware));
+                        $test(new class ($middleware) implements IteratorAggregate
+                        {
+                            public function __construct($middleware) { $this->middleware = $middleware; }
+                            public function getIterator() { return new ArrayIterator($this->middleware); }
+                        });
+
+                    });
+
+                });
+
+                context('when a middleware in the given middleware queue does not implement MiddlewareInterface', function () {
+
+                    it('should throw a DispatcherCreationException', function () {
+
+                        $test = function () {
+
+                            ($this->factory)($this->handler, [
+                                mock(MiddlewareInterface::class)->get(),
+                                'middleware',
+                            ]);
+
+                        };
+
+                        $exception = new DispatcherCreationException(mock(TypeError::class)->get());
+
+                        expect($test)->toThrow($exception);
+
                     });
 
                 });
@@ -83,7 +108,7 @@ describe('DispatcherFactory', function () {
 
         context('when the given request handler does not implement RequestHandlerInterface', function () {
 
-            it('should throw a RequestHandlerTypeException', function () {
+            it('should throw a DispatcherCreationException', function () {
 
                 $test = function () {
 
@@ -91,7 +116,7 @@ describe('DispatcherFactory', function () {
 
                 };
 
-                $exception = new RequestHandlerTypeException('handler', mock(TypeError::class)->get());
+                $exception = new DispatcherCreationException(mock(TypeError::class)->get());
 
                 expect($test)->toThrow($exception);
 

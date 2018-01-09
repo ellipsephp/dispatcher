@@ -9,12 +9,44 @@ use Interop\Http\Server\MiddlewareInterface;
 use Interop\Http\Server\RequestHandlerInterface;
 
 use Ellipse\Dispatcher\RequestHandlerWithMiddlewareQueue;
+use Ellipse\Dispatcher\Exceptions\MiddlewareTypeException;
 
 describe('RequestHandlerWithMiddlewareQueue', function () {
 
     beforeEach(function () {
 
+        $this->request1 = mock(ServerRequestInterface::class);
+        $this->request2 = mock(ServerRequestInterface::class);
+        $this->request3 = mock(ServerRequestInterface::class);
+        $this->response1 = mock(ResponseInterface::class);
+        $this->response2 = mock(ResponseInterface::class);
+        $this->response3 = mock(ResponseInterface::class);
+
         $this->delegate = mock(RequestHandlerInterface::class);
+
+        $this->middleware1 = new class implements MiddlewareInterface
+        {
+            public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
+            {
+                $request = $request->withAttribute('key1', 'value1');
+
+                $response = $handler->handle($request);
+
+                return $response->withHeader('key1', 'value1');
+            }
+        };
+
+        $this->middleware2 = new class implements MiddlewareInterface
+        {
+            public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
+            {
+                $request = $request->withAttribute('key2', 'value2');
+
+                $response = $handler->handle($request);
+
+                return $response->withHeader('key2', 'value2');
+            }
+        };
 
     });
 
@@ -26,44 +58,36 @@ describe('RequestHandlerWithMiddlewareQueue', function () {
 
     });
 
-    describe('->handle()', function () {
+    describe('__construct()', function () {
 
-        beforeEach(function () {
+        context('when a middleware in the given array of middleware does not implement MiddlewareInterface', function () {
 
-            $this->request1 = mock(ServerRequestInterface::class);
-            $this->request2 = mock(ServerRequestInterface::class);
-            $this->request3 = mock(ServerRequestInterface::class);
-            $this->response1 = mock(ResponseInterface::class);
-            $this->response2 = mock(ResponseInterface::class);
-            $this->response3 = mock(ResponseInterface::class);
+            it('should throw a MiddlewareTypeException', function () {
+
+                $this->request1->withAttribute->with('key1', 'value1')->returns($this->request2);
+
+                $test = function () {
+
+                    new RequestHandlerWithMiddlewareQueue($this->delegate->get(), [
+                        $this->middleware1,
+                        'middleware',
+                    ]);
+
+                };
+
+                $exception = new MiddlewareTypeException('middleware', mock(TypeError::class)->get());
+
+                expect($test)->toThrow($exception);
+
+            });
 
         });
 
+    });
+
+    describe('->handle()', function () {
+
         it('should process the array of middleware as a queue (first in first out)', function () {
-
-            $this->middleware1 = new class implements MiddlewareInterface
-            {
-                public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
-                {
-                    $request = $request->withAttribute('key1', 'value1');
-
-                    $response = $handler->handle($request);
-
-                    return $response->withHeader('key1', 'value1');
-                }
-            };
-
-            $this->middleware2 = new class implements MiddlewareInterface
-            {
-                public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
-                {
-                    $request = $request->withAttribute('key2', 'value2');
-
-                    $response = $handler->handle($request);
-
-                    return $response->withHeader('key2', 'value2');
-                }
-            };
 
             $this->request1->withAttribute->with('key1', 'value1')->returns($this->request2);
             $this->request2->withAttribute->with('key2', 'value2')->returns($this->request3);

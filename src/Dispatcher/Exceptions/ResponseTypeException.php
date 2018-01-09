@@ -2,11 +2,11 @@
 
 namespace Ellipse\Dispatcher\Exceptions;
 
-use UnexpectedValueException;
+use TypeError;
 
 use Psr\Http\Message\ResponseInterface;
 
-class ResponseTypeException extends UnexpectedValueException implements DispatcherExceptionInterface
+class ResponseTypeException extends TypeError implements DispatcherExceptionInterface
 {
     public function __construct($value)
     {

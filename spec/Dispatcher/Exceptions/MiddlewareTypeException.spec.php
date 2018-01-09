@@ -7,11 +7,21 @@ use Ellipse\Dispatcher\Exceptions\MiddlewareTypeException;
 
 describe('MiddlewareTypeException', function () {
 
+    beforeEach(function () {
+
+        $this->exception = new MiddlewareTypeException('invalid', mock(TypeError::class)->get());
+
+    });
+
+    it('should extend TypeError', function () {
+
+        expect($this->exception)->toBeAnInstanceOf(TypeError::class);
+
+    });
+
     it('should implement DispatcherExceptionInterface', function () {
 
-        $test = new MiddlewareTypeException('invalid', mock(TypeError::class)->get());
-
-        expect($test)->toBeAnInstanceOf(DispatcherExceptionInterface::class);
+        expect($this->exception)->toBeAnInstanceOf(DispatcherExceptionInterface::class);
 
     });
 

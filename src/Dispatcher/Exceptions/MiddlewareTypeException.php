@@ -3,11 +3,10 @@
 namespace Ellipse\Dispatcher\Exceptions;
 
 use TypeError;
-use UnexpectedValueException;
 
 use Interop\Http\Server\MiddlewareInterface;
 
-class MiddlewareTypeException extends UnexpectedValueException implements DispatcherExceptionInterface
+class MiddlewareTypeException extends TypeError implements DispatcherExceptionInterface
 {
     public function __construct($value, TypeError $previous)
     {

@@ -5,11 +5,21 @@ use Ellipse\Dispatcher\Exceptions\ResponseTypeException;
 
 describe('ResponseTypeException', function () {
 
+    beforeEach(function () {
+
+        $this->exception = new ResponseTypeException('invalid');
+
+    });
+
+    it('should extend TypeError', function () {
+
+        expect($this->exception)->toBeAnInstanceOf(TypeError::class);
+
+    });
+
     it('should implement DispatcherExceptionInterface', function () {
 
-        $test = new ResponseTypeException('invalid');
-
-        expect($test)->toBeAnInstanceOf(DispatcherExceptionInterface::class);
+        expect($this->exception)->toBeAnInstanceOf(DispatcherExceptionInterface::class);
 
     });
 

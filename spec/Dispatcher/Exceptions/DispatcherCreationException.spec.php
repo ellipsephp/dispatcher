@@ -3,13 +3,13 @@
 use function Eloquent\Phony\Kahlan\mock;
 
 use Ellipse\Dispatcher\Exceptions\DispatcherExceptionInterface;
-use Ellipse\Dispatcher\Exceptions\RequestHandlerTypeException;
+use Ellipse\Dispatcher\Exceptions\DispatcherCreationException;
 
-describe('RequestHandlerTypeException', function () {
+describe('DispatcherCreationException', function () {
 
     it('should implement DispatcherExceptionInterface', function () {
 
-        $test = new RequestHandlerTypeException('invalid', mock(TypeError::class)->get());
+        $test = new DispatcherCreationException(mock(TypeError::class)->get());
 
         expect($test)->toBeAnInstanceOf(DispatcherExceptionInterface::class);
 

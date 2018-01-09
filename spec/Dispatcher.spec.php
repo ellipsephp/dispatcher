@@ -47,7 +47,7 @@ describe('Dispatcher', function () {
 
     describe('__construct()', function () {
 
-        context('when a middleware in the given middleware queue is not an implementation of MiddlewareInterface', function () {
+        context('when a middleware in the given middleware queue does not implement MiddlewareInterface', function () {
 
             it('should throw a MiddlewareTypeException', function () {
 
