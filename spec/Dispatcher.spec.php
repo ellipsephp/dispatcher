@@ -13,73 +13,100 @@ use Ellipse\Dispatcher\Exceptions\MiddlewareTypeException;
 
 describe('Dispatcher', function () {
 
+    beforeEach(function () {
+
+        $this->request1 = mock(ServerRequestInterface::class);
+        $this->request2 = mock(ServerRequestInterface::class);
+        $this->request3 = mock(ServerRequestInterface::class);
+        $this->response1 = mock(ResponseInterface::class);
+        $this->response2 = mock(ResponseInterface::class);
+        $this->response3 = mock(ResponseInterface::class);
+        $this->handler = mock(RequestHandlerInterface::class);
+
+        $this->middleware = new class implements MiddlewareInterface
+        {
+            public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
+            {
+                $request = $request->withAttribute('key', 'value');
+
+                $response = $handler->handle($request);
+
+                return $response->withHeader('key', 'value');
+            }
+        };
+
+    });
+
     it('should implement RequestHandlerInterface', function () {
 
-        $handler = mock(RequestHandlerInterface::class)->get();
-
-        $test = new Dispatcher([], $handler);
+        $test = new Dispatcher($this->handler->get(), []);
 
         expect($test)->toBeAnInstanceOf(RequestHandlerInterface::class);
 
     });
 
+    describe('->with()', function () {
+
+        it('should return a new Dispatcher with the current one wrapped inside the given middleware', function () {
+
+            $this->request1->withAttribute->with('key', 'value')->returns($this->request2);
+            $this->request2->withAttribute->with('key', 'value')->returns($this->request3);
+            $this->response1->withHeader->with('key', 'value')->returns($this->response2);
+            $this->response2->withHeader->with('key', 'value')->returns($this->response3);
+            $this->handler->handle->with($this->request3)->returns($this->response1);
+
+            $dispatcher = new Dispatcher($this->handler->get());
+
+            $test = $dispatcher
+                ->with($this->middleware)
+                ->with($this->middleware)
+                ->handle($this->request1->get());
+
+            expect($test)->toBe($this->response3->get());
+
+        });
+
+    });
+
     describe('->handle()', function () {
 
-        context('when the given iterable list of middleware is not empty', function () {
-
-            beforeEach(function () {
-
-                $this->middleware = new class implements MiddlewareInterface
-                {
-                    public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
-                    {
-                        $request = $request->withAttribute('key', 'value');
-
-                        $response = $handler->handle($request);
-
-                        return $response->withHeader('key', 'value');
-                    }
-                };
-
-            });
+        context('when the iterable list of middleware is not empty', function () {
 
             context('when all the middleware are implementations of MiddlewareInterface', function () {
 
-                it('should dispatch the middleware in the order they are listed', function () {
+                it('should process the request with all the middleware before handling it with the decorated request handler', function () {
 
-                    $request1 = mock(ServerRequestInterface::class);
-                    $request2 = mock(ServerRequestInterface::class);
-                    $request3 = mock(ServerRequestInterface::class);
-                    $response1 = mock(ResponseInterface::class);
-                    $response2 = mock(ResponseInterface::class);
-                    $response3 = mock(ResponseInterface::class);
-                    $handler = mock(RequestHandlerInterface::class);
+                    $test = function ($middleware) {
 
-                    $test = function ($middleware) use ($request1, $response3, $handler) {
+                        $dispatcher = new Dispatcher($this->handler->get(), $middleware);
 
-                        $dispatcher = new Dispatcher($middleware, $handler->get());
+                        $test = $dispatcher->handle($this->request1->get());
 
-                        $test = $dispatcher->handle($request1->get());
-
-                        expect($test)->toBe($response3->get());
+                        expect($test)->toBe($this->response3->get());
 
                     };
 
-                    $request1->withAttribute->with('key', 'value')->returns($request2);
-                    $request2->withAttribute->with('key', 'value')->returns($request3);
-                    $response1->withHeader->with('key', 'value')->returns($response2);
-                    $response2->withHeader->with('key', 'value')->returns($response3);
-                    $handler->handle->with($request3)->returns($response1);
+                    $this->request1->withAttribute->with('key', 'value')->returns($this->request2);
+                    $this->request2->withAttribute->with('key', 'value')->returns($this->request3);
+                    $this->response1->withHeader->with('key', 'value')->returns($this->response2);
+                    $this->response2->withHeader->with('key', 'value')->returns($this->response3);
+                    $this->handler->handle->with($this->request3)->returns($this->response1);
 
                     $middleware = [$this->middleware, $this->middleware];
-
-                    $test($middleware);
-                    $test(new ArrayIterator($middleware));
-                    $test(new class ($middleware) implements IteratorAggregate
+                    $iterator = new ArrayIterator($middleware);
+                    $aggregate = new class ($middleware) implements IteratorAggregate
                     {
                         public function __construct($middleware) { $this->middleware = $middleware; }
                         public function getIterator() { return new ArrayIterator($this->middleware); }
-                    });
+                    };
+
+                    // the dispatcher should be usable multiple times.
+                    $test($middleware);
+                    $test($middleware);
+                    $test($iterator);
+                    $test($iterator);
+                    $test($aggregate);
+                    $test($aggregate);
 
                 });
 
@@ -89,17 +116,13 @@ describe('Dispatcher', function () {
 
                 it('should throw a MiddlewareTypeException', function () {
 
-                    $request1 = mock(ServerRequestInterface::class);
-                    $request2 = mock(ServerRequestInterface::class);
-                    $handler = mock(RequestHandlerInterface::class)->get();
+                    $test = function ($middleware) {
 
-                    $test = function ($middleware) use ($request1, $handler) {
+                        $dispatcher = new Dispatcher($this->handler->get(), $middleware);
 
-                        $dispatcher = new Dispatcher($middleware, $handler);
+                        $test = function () use ($dispatcher) {
 
-                        $test = function () use ($request1, $dispatcher) {
-
-                            $dispatcher->handle($request1->get());
+                            $dispatcher->handle($this->request1->get());
 
                         };
 
@@ -109,7 +132,7 @@ describe('Dispatcher', function () {
 
                     };
 
-                    $request1->withAttribute->with('key', 'value')->returns($request2);
+                    $this->request1->withAttribute->with('key', 'value')->returns($this->request2);
 
                     $middleware = [$this->middleware, 'middleware'];
 
@@ -126,32 +149,17 @@ describe('Dispatcher', function () {
 
         });
 
-        context('when the given iterable list of middleware is empty', function () {
+        context('when the iterable list of middleware is empty', function () {
 
-            it('should proxy the handler ->handle() method', function () {
+            it('should proxy the request handler', function () {
 
-                $request = mock(ServerRequestInterface::class)->get();
-                $response = mock(ResponseInterface::class)->get();
-                $handler = mock(RequestHandlerInterface::class);
+                $this->handler->handle->with($this->request1)->returns($this->response1);
 
-                $test = function ($middleware) use ($request, $response, $handler) {
+                $dispatcher = new Dispatcher($this->handler->get());
 
-                    $dispatcher = new Dispatcher($middleware, $handler->get());
+                $test = $dispatcher->handle($this->request1->get());
 
-                    $handler->handle->with($request)->returns($response);
-
-                    $test = $dispatcher->handle($request);
-
-                    expect($test)->toBe($response);
-
-                };
-
-                $test([]);
-                $test(new ArrayIterator([]));
-                $test(new class implements IteratorAggregate
-                {
-                    public function getIterator() { return new ArrayIterator([]); }
-                });
+                expect($test)->toBe($this->response1->get());
 
             });
 

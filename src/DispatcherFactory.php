@@ -9,8 +9,9 @@ use Ellipse\Dispatcher\Exceptions\RequestHandlerTypeException;
 class DispatcherFactory implements DispatcherFactoryInterface
 {
     /**
-     * Return a new Dispatcher by wrapping the given request handler and
-     * iterable list of middleware into proxies.
+     * Return a new Dispatcher using the given request handler and iterable list
+     * of middleware. Ensure the given request handler is an implementation of
+     * RequestHandlerInterface.
      *
      * @param mixed     $handler
      * @param iterable  $middleware
@@ -21,7 +22,7 @@ class DispatcherFactory implements DispatcherFactoryInterface
     {
         if ($handler instanceof RequestHandlerInterface) {
 
-            return new Dispatcher($middleware, $handler);
+            return new Dispatcher($handler, $middleware);
 
         }
 

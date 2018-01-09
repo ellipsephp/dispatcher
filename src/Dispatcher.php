@@ -15,35 +15,48 @@ use Ellipse\Dispatcher\Exceptions\MiddlewareTypeException;
 class Dispatcher implements RequestHandlerInterface
 {
     /**
-     * The iterable list of middleware to dispatch.
-     *
-     * @var iterable
-     */
-    private $middleware;
-
-    /**
-     * The final request handler.
+     * The decorated request handler.
      *
      * @var \Psr\Http\Message\RequestHandlerInterface
      */
     private $handler;
 
     /**
-     * Sets up a dispatcher with the given iterable list of middleware and
-     * request handler.
+     * The iterable list of middleware wrapped around the decorated request
+     * handler.
      *
-     * @param iterable                                      $middleware
-     * @param \Interop\Http\Server\RequestHandlerInterface  $handler
+     * @var iterable
      */
-    public function __construct(iterable $middleware, RequestHandlerInterface $handler)
+    private $middleware;
+
+    /**
+     * Set up a dispatcher with the given request handler and iterable list of
+     * middleware.
+     *
+     * @param \Interop\Http\Server\RequestHandlerInterface  $handler
+     * @param iterable                                      $middleware
+     */
+    public function __construct(RequestHandlerInterface $handler, iterable $middleware = [])
     {
-        $this->middleware = $middleware;
         $this->handler = $handler;
+        $this->middleware = $middleware;
     }
 
     /**
-     * Handle a request by processing it through all the middleware before
-     * handling it with the final request handler.
+     * Return a new Dispatcher with the current one wrapped inside the given
+     * middleware.
+     *
+     * @param \Interop\Http\Server\MiddlewareInterface $middleware
+     * @return \Ellipse\Dispatcher
+     */
+    public function with(MiddlewareInterface $middleware): Dispatcher
+    {
+        return new Dispatcher($this, [$middleware]);
+    }
+
+    /**
+     * Handle a request by processing it with all the middleware before handling
+     * it with the request handler.
      *
      * @param \Psr\Http\Message\ServerRequestInterface $request
      * @return \Psr\Http\Message\ResponseInterface
@@ -57,15 +70,15 @@ class Dispatcher implements RequestHandlerInterface
 
         if (count($middleware) > 0) {
 
-            $first = array_shift($middleware);
+            $head = array_shift($middleware);
 
-            if ($first instanceof MiddlewareInterface) {
+            if ($head instanceof MiddlewareInterface) {
 
-                return $first->process($request, new Dispatcher($middleware, $this->handler));
+                return $head->process($request, new Dispatcher($this->handler, $middleware));
 
             }
 
-            throw new MiddlewareTypeException($first);
+            throw new MiddlewareTypeException($head);
 
         }
 

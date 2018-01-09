@@ -15,10 +15,12 @@ This package provides a basic **[Psr-15 middleware](https://github.com/http-inte
 
 ## Getting started
 
-This package provides an `Ellipse\Dispatcher` class allowing to process a Psr-7 request through a list of [Psr-15 middleware](https://github.com/http-interop/http-server-middleware) before handling it with a [Psr-15 request handler](https://github.com/http-interop/http-server-handler). Its constructor takes two parameters:
+This package provides an `Ellipse\Dispatcher` class allowing to process a Psr-7 request through a list of [Psr-15 middleware](https://github.com/http-interop/http-server-middleware) before handling it with a [Psr-15 request handler](https://github.com/http-interop/http-server-handler).
 
-- an `iterable` (array or implementation of `Traversable`) containing middleware objects implementing `Interop\Http\Server\MiddlewareInterface`
-- a final request handler object implementing `Interop\Http\Server\RequestHandlerInterface`
+It is basically a Psr-15 request handler decorator wrapping a list of middleware around a request handler. Its constructor takes two parameters:
+
+- a request handler instance implementing `Interop\Http\Server\RequestHandlerInterface`
+- an `iterable` (array or implementation of `Traversable`) containing middleware instances implementing `Interop\Http\Server\MiddlewareInterface`
 
 The `Dispatcher` itself implements `Interop\Http\Server\RequestHandlerInterface` so a Psr-7 response is produced by using its `->handle()` method with a Psr-7 request. It also means it can be used as the request handler of another `Dispatcher`.
 
@@ -36,23 +38,59 @@ use Ellipse\Dispatcher;
 // Get some incoming Psr-7 request.
 $request = some_psr7_request_factory();
 
-// Create a dispatcher using two middleware and a request handler.
-$dispatcher = new Dispatcher([
+// Create a dispatcher using two middleware and a request handler. The list of middleware
+// can be an array or any implementation of Traversable.
+$dispatcher = new Dispatcher(new SomeRequestHandler, [
     new SomeMiddleware1,
     new SomeMiddleware2,
-], new SomeRequestHandler);
+]);
 
 // Produce a response using the dispatcher.
-// The request goes through SomeMiddleware1, SomeMiddleware2 and SomeRequestHandler.
+// Here the request goes through SomeMiddleware1, SomeMiddleware2 and SomeRequestHandler.
 $response = $dispatcher->handle($request);
 
 // It can be used as the request handler of another dispatcher.
-// The request goes through SomeMiddleware3, SomeMiddleware1, SomeMiddleware2 and SomeRequestHandler
-(new Dispatcher([new SomeMiddleware3], $dispatcher))->handle($request);
+// Here the request goes through SomeMiddleware3, SomeMiddleware1, SomeMiddleware2 and SomeRequestHandler
+(new Dispatcher($dispatcher, [new SomeMiddleware3]))->handle($request);
 
 // Be careful here SomeMiddleware1 ->process() method is called but the dispatcher ->handle() method
 // will throw a MiddlewareTypeException before trying to call ->process() on 'some_middleware'.
-(new Dispatcher([new SomeMiddleware1, 'some_middleware'], new SomeRequestHandler))->handle($request);
+(new Dispatcher(new SomeRequestHandler, [new SomeMiddleware1, 'some_middleware']))->handle($request);
+```
+
+The `Dispatcher` class also have a `->with()` method taking an implementation of `MiddlewareInterface` as parameter. It returns a new dispatcher with the given middleware wrapped around the previous one. Be careful the new middleware will be the first processed by the new dispatcher:
+
+```php
+<?php
+
+namespace App;
+
+use Ellipse\Dispatcher;
+
+// Get some incoming Psr-7 request.
+$request = some_psr7_request_factory();
+
+// Create a dispatcher with two middleware.
+$dispatcher = new Dispatcher(new SomeRequestHandler, [
+    new SomeMiddleware1,
+    new SomeMiddleware2,
+]);
+
+// Create a new dispatcher with a new middleware on the top of the middleware list.
+$dispatcher = $dispatcher->with(new SomeMiddleware3);
+
+// Here the request goes through SomeMiddleware3, SomeMiddleware1, SomeMiddleware2 and SomeRequestHandler.
+$response = $dispatcher->handle($request);
+
+// It allows to create dispatchers from the outside-in if you like.
+$dispatcher = new Dispatcher(new SomeRequestHandler);
+
+$dispatcher = $dispatcher->with(new SomeMiddleware3);
+$dispatcher = $dispatcher->with(new SomeMiddleware2);
+$dispatcher = $dispatcher->with(new SomeMiddleware1);
+
+// Here the request goes through SomeMiddleware1, SomeMiddleware2, SomeMiddleware3 and SomeRequestHandler.
+$response = $dispatcher->handle($request);
 ```
 
 ## Using a fallback response
@@ -74,10 +112,10 @@ $request = some_psr7_request_factory();
 $response = some_psr7_response_factory()->withStatus(404);
 
 // Create a dispatcher using two middleware and a fallback response as request handler.
-$dispatcher = new Dispatcher([
+$dispatcher = new Dispatcher(new FallbackResponse($response), [
     new SomeMiddleware1,
     new SomeMiddleware2,
-], new FallbackResponse($response));
+]);
 
 // The request goes through SomeMiddleware1, SomeMiddleware2 then the fallback response is
 // returned when none of them return a response on its own.
@@ -88,7 +126,7 @@ $response = $dispatcher->handle($request);
 
 Another common practice is to allow callables and class names registered in a container to be used as regular Psr-15 middleware/request handler.
 
-For this purpose this package also provides an `Ellipse\DispatcherFactory` class allowing to produce `Dispatcher` instances. Its `__invoke()` method takes any value as request handler and an iterable list of middleware. An `Ellipse\Dispatcher\Exceptions\RequestHandlerTypeException` exception is thrown when the given request handler is not an implementation of `RequestHandlerInterface`.
+For this purpose this package also provides an `Ellipse\DispatcherFactory` class allowing to produce `Dispatcher` instances. Its `__invoke()` method takes any value as request handler and an optional iterable list of middleware. An `Ellipse\Dispatcher\Exceptions\RequestHandlerTypeException` exception is thrown when the given request handler is not an implementation of `RequestHandlerInterface`.
 
 ```php
 <?php
@@ -103,23 +141,19 @@ $request = some_psr7_request_factory();
 // Get a dispatcher factory.
 $factory = new DispatcherFactory;
 
-// Please note the request handler comes before the middleware because middleware are optional.
+// Use the factory to create a new Dispatcher
 $dispatcher = $factory(new SomeRequestHandler, [new SomeMiddleware]);
 
-// Here the request goes through SomeMiddleware and SomeRequestHandler.
-$dispatcher->handle($request);
-
-// Here a RequestHandlerTypeException is thrown.
+// The request handler can be any value but a RequestHandlerTypeException is thrown when it
+// is not an implementation of RequestHandlerInterface.
 $dispatcher = $factory('some_request_handler', [new SomeMiddleware]);
 ```
 
-So what's the point you may ask.
+So what's the point of all this you may ask.
 
-The point of `DispatcherFactory` is to be decorated by other factories resolving the given values as Psr-15 middleware/request handler before delegating the dispatcher creation to the decorated `DispatcherFactoryInterface` until it hits the original `DispatcherFactory`. It is a starting point for such factory decorators (also called resolvers) which ensure the `Dispatcher` creation fails when the request handler is not resolved as a Psr-15 instance by any decorators.
+The point of `DispatcherFactory` is to be decorated by other factories resolving the given values as Psr-15 middleware/request handler before delegating the dispatcher creation to the decorated `DispatcherFactoryInterface` until it hits the original `DispatcherFactory`. It is a starting point for such factory decorators (also called resolvers) which ensure the `Dispatcher` creation fails when the request handler is not resolved as a Psr-15 request handler by any decorators.
 
-It is recommended for factory decorators to implement `Ellipse\DispatcherFactoryInterface` so they can also be decorated by other decorators.
-
-Also don't forget implementations of `Iterator` can be used as middleware list so it is easy to wrap the given list inside an iterator resolving them on the fly.
+Also don't forget implementations of `Traversable` can be used as middleware list so it is easy to wrap the given list inside an iterator resolving them on the fly.
 
 Here is an example of callable resolving using the `Ellipse\Dispatcher\CallableResolver` class from the [ellipse/dispatcher-callable](https://github.com/ellipsephp/dispatcher-callable) package:
 
@@ -163,6 +197,103 @@ Here is some ellipse packages providing resolvers for common resolving scenario:
 - [ellipse/dispatcher-controller](https://github.com/ellipsephp/dispatcher-controller) allowing to use controller definitions as Psr-15 request handler
 
 Then it is up to you to build the dispatcher factory you need.
+
+Here is an example of `DispatcherFactoryInterface` implementation in case you need to create a custom one. First we create a `IteratorAggregate` resolving middleware based on a clever condition:
+
+```php
+<?php
+
+namespace App;
+
+use IteratorAggregate;
+
+class CleverMiddlewareGenerator implements IteratorAggregate
+{
+    private $middleware;
+
+    public function __construct(iterable $middleware)
+    {
+        $this->middleware = $middleware;
+    }
+
+    public function getIterator()
+    {
+        // The decorated list of middleware is traversed and a CleverMiddleware is yielded
+        // instead of the original one when the clever condition is met.
+        foreach ($this->middleware as $middleware) {
+
+            yield $this->cleverCondition($middleware)
+                ? new CleverMiddleware($middleware)
+                : $middleware;
+
+        }
+    }
+
+    private cleverCondition($middleware): bool
+    {
+        // ...
+    }
+}
+```
+
+Then we create a factory decorator implementing `DispatcherFactoryInterface`:
+
+```php
+<?php
+
+namespace App;
+
+use Ellipse\Dispatcher;
+use Ellipse\DispatcherFactoryInterface;
+
+class CleverResolver implements DispatcherFactoryInterface
+{
+    private $delegate;
+
+    public function __construct(DispatcherFactoryInterface $delegate)
+    {
+        $this->delegate = $delegate;
+    }
+
+    public function __invoke($handler, iterable $middleware = []): Dispatcher
+    {
+        // wrap the middleware inside the clever middleware generator.
+        $middleware = new CleverMiddlewareGenerator($middleware);
+
+        // replace the handler with a CleverRequestHandler when the clever condition is met.
+        if ($this->cleverCondition($handler)) {
+
+            $handler = new CleverRequestHandler($handler);
+
+        }
+
+        // Delegate the dispatcher creation to the decorated factory.
+        return ($this->delegate)($handler, $middleware);
+    }
+
+    private cleverCondition($handler): bool
+    {
+        // ...
+    }
+}
+```
+
+The `CleverResolver` can now decorate any implementation of `DispatcherFactoryInterface`:
+
+```php
+<?php
+
+namespace App;
+
+use Ellipse\DispatcherFactory;
+use Ellipse\Dispatcher\CallableResolver;
+
+$factory = new CleverResolver(
+    new CallableResolver(
+        new DispatcherFactory
+    )
+);
+```
 
 ## Composing a dispatcher
 
@@ -233,7 +364,7 @@ $r->group('/group2', function ($r) use ($factory) {
 });
 ```
 
-Ok it is a bit cumbersome so `ComposableResolver` and `ResolverWithMiddleware` both have a `->with()` method taking a list of middleware as parameter. Here is the same example using the `->with()` method:
+Ok it is a bit cumbersome so `ComposableResolver` and `ResolverWithMiddleware` both have a `->with()` method taking an iterable list of middleware as parameter. Here is the same example using the `->with()` method:
 
 ```php
 <?php

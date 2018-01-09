@@ -39,7 +39,7 @@ describe('DispatcherFactory', function () {
 
                     $test = ($this->factory)($this->handler);
 
-                    $dispatcher = new Dispatcher([], $this->handler);
+                    $dispatcher = new Dispatcher($this->handler, []);
 
                     expect($test)->toEqual($dispatcher);
 
@@ -55,7 +55,7 @@ describe('DispatcherFactory', function () {
 
                         $test = ($this->factory)($this->handler, $middleware);
 
-                        $dispatcher = new Dispatcher($middleware, $this->handler);
+                        $dispatcher = new Dispatcher($this->handler, $middleware);
 
                         expect($test)->toEqual($dispatcher);
 
@@ -77,7 +77,7 @@ describe('DispatcherFactory', function () {
 
         });
 
-        context('when the given request handler implements RequestHandlerInterface', function () {
+        context('when the given request handler does not implement RequestHandlerInterface', function () {
 
             it('should throw a RequestHandlerTypeException', function () {
 
