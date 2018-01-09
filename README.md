@@ -26,7 +26,9 @@ The `Dispatcher` itself implements `Interop\Http\Server\RequestHandlerInterface`
 
 The same `Dispatcher` can be used multiple times to handle as many request as needed. The only exception is when creating a `Dispatcher` using a php `Generator` as list of middleware: it could only be used one time because a php `Generator` can't be rewinded.
 
-Finally if a middleware from the given list is not an implementation of `MiddlewareInterface` an `Ellipse\Dispatcher\Exceptions\MiddlewareTypeException` is thrown when it is its turn to process the request. You can use a [factory decorator](https://github.com/ellipsephp/dispatcher#middleware-and-request-handler-resolving) to resolve some type of values as Psr-15 middleware.
+The middleware from the list are treated as a queue (first in first out) so the first middleware in the list is the first to process the request.
+
+Finally if a middleware from the given list is not an implementation of `MiddlewareInterface` an `Ellipse\Dispatcher\Exceptions\MiddlewareTypeException` is thrown. You can use a [factory decorators](https://github.com/ellipsephp/dispatcher#middleware-and-request-handler-resolving) to resolve some type of values as Psr-15 middleware.
 
 ```php
 <?php
@@ -38,24 +40,20 @@ use Ellipse\Dispatcher;
 // Get some incoming Psr-7 request.
 $request = some_psr7_request_factory();
 
-// Create a dispatcher using two middleware and a request handler. The list of middleware
-// can be an array or any implementation of Traversable.
+// Create a dispatcher using two middleware and a request handler. The list of middleware can be an array or any implementation of Traversable.
 $dispatcher = new Dispatcher(new SomeRequestHandler, [
     new SomeMiddleware1,
     new SomeMiddleware2,
 ]);
 
-// Produce a response using the dispatcher.
-// Here the request goes through SomeMiddleware1, SomeMiddleware2 and SomeRequestHandler.
+// Produce a response using the dispatcher. Here the request goes through SomeMiddleware1, SomeMiddleware2 and SomeRequestHandler.
 $response = $dispatcher->handle($request);
 
-// It can be used as the request handler of another dispatcher.
-// Here the request goes through SomeMiddleware3, SomeMiddleware1, SomeMiddleware2 and SomeRequestHandler
+// It can be used as the request handler of another dispatcher. Here the request goes through SomeMiddleware3, SomeMiddleware1, SomeMiddleware2 and SomeRequestHandler
 (new Dispatcher($dispatcher, [new SomeMiddleware3]))->handle($request);
 
-// Be careful here SomeMiddleware1 ->process() method is called but the dispatcher ->handle() method
-// will throw a MiddlewareTypeException before trying to call ->process() on 'some_middleware'.
-(new Dispatcher(new SomeRequestHandler, [new SomeMiddleware1, 'some_middleware']))->handle($request);
+// Be careful here a MiddlewareTypeException is thrown because 'something' is not a Psr-15 middleware.
+new Dispatcher(new SomeRequestHandler, [new SomeMiddleware, 'something']);
 ```
 
 The `Dispatcher` class also have a `->with()` method taking an implementation of `MiddlewareInterface` as parameter. It returns a new dispatcher with the given middleware wrapped around the previous one. Be careful the new middleware will be the first processed by the new dispatcher:
@@ -144,9 +142,8 @@ $factory = new DispatcherFactory;
 // Use the factory to create a new Dispatcher
 $dispatcher = $factory(new SomeRequestHandler, [new SomeMiddleware]);
 
-// The request handler can be any value but a RequestHandlerTypeException is thrown when it
-// is not an implementation of RequestHandlerInterface.
-$dispatcher = $factory('some_request_handler', [new SomeMiddleware]);
+// The request handler can be any value but a RequestHandlerTypeException is thrown when it is not an implementation of RequestHandlerInterface.
+$dispatcher = $factory('something', [new SomeMiddleware]);
 ```
 
 So what's the point of all this you may ask.
@@ -218,8 +215,7 @@ class CleverMiddlewareGenerator implements IteratorAggregate
 
     public function getIterator()
     {
-        // The decorated list of middleware is traversed and a CleverMiddleware is yielded
-        // instead of the original one when the clever condition is met.
+        // The decorated list of middleware is traversed and a CleverMiddleware is yielded instead of the original one when the clever condition is met.
         foreach ($this->middleware as $middleware) {
 
             yield $this->cleverCondition($middleware)
@@ -335,12 +331,10 @@ $r->group('/group1', function ($r) use ($factory) {
     // SomeMiddleware3 is specific to this route group.
     $factory = new ResolverWithMiddleware($factory, [new SomeMiddleware3]);
 
-    // The dispatcher matching the GET /group1/route1 route will use SomeMiddleware1, SomeMiddleware2,
-    // SomeMiddleware3 and RequestHandler2.
+    // The dispatcher matching the GET /group1/route1 route will use SomeMiddleware1, SomeMiddleware2, SomeMiddleware3 and RequestHandler2.
     $r->get('/route1', $factory(new RequestHandler2));
 
-    // The dispatcher matching the GET /group1/route2 route will use SomeMiddleware1, SomeMiddleware2,
-    // SomeMiddleware3 and RequestHandler3.
+    // The dispatcher matching the GET /group1/route2 route will use SomeMiddleware1, SomeMiddleware2, SomeMiddleware3 and RequestHandler3.
     $r->get('/route2', $factory(new RequestHandler3));
 
 });
@@ -351,12 +345,10 @@ $r->group('/group2', function ($r) use ($factory) {
     // SomeMiddleware4 is specific to this route group.
     $factory = new ResolverWithMiddleware($factory, [new SomeMiddleware4]);
 
-    // The dispatcher matching the GET /group2/route1 route will use SomeMiddleware1, SomeMiddleware2,
-    // SomeMiddleware4 and RequestHandler4.
+    // The dispatcher matching the GET /group2/route1 route will use SomeMiddleware1, SomeMiddleware2, SomeMiddleware4 and RequestHandler4.
     $r->get('/route1', $factory(new RequestHandler4));
 
-    // Also, dispatcher factories take an optional middleware list as second parameter so middleware
-    // can be added on a per route basis.
+    // Also, dispatcher factories take an optional middleware list as second parameter so middleware can be added on a per route basis.
     $r->get('/route2', $factory(new RequestHandler5, [
         new SomeMiddleware5,
     ]));
@@ -397,12 +389,10 @@ $r->group('/group1', function ($r) use ($factory) {
     // SomeMiddleware3 is specific to this route group.
     $factory = $factory->with([new SomeMiddleware3]);
 
-    // The dispatcher matching the GET /group1/route1 route will use SomeMiddleware1, SomeMiddleware2,
-    // SomeMiddleware3 and RequestHandler2.
+    // The dispatcher matching the GET /group1/route1 route will use SomeMiddleware1, SomeMiddleware2, SomeMiddleware3 and RequestHandler2.
     $r->get('/route1', $factory(new RequestHandler2));
 
-    // The dispatcher matching the GET /group1/route2 route will use SomeMiddleware1, SomeMiddleware2,
-    // SomeMiddleware3 and RequestHandler3.
+    // The dispatcher matching the GET /group1/route2 route will use SomeMiddleware1, SomeMiddleware2, SomeMiddleware3 and RequestHandler3.
     $r->get('/route2', $factory(new RequestHandler3));
 
 });
@@ -413,12 +403,10 @@ $r->group('/group2', function ($r) use ($factory) {
     // SomeMiddleware4 is specific to this route group.
     $factory = $factory->with([new SomeMiddleware4]);
 
-    // The dispatcher matching the GET /group2/route1 route will use SomeMiddleware1, SomeMiddleware2,
-    // SomeMiddleware4 and RequestHandler4.
+    // The dispatcher matching the GET /group2/route1 route will use SomeMiddleware1, SomeMiddleware2, SomeMiddleware4 and RequestHandler4.
     $r->get('/route1', $factory(new RequestHandler4));
 
-    // Also, dispatcher factories take an optional middleware list as second parameter so middleware
-    // can be added on a per route basis.
+    // Also, dispatcher factories take an optional middleware list as second parameter so middleware can be added on a per route basis.
     $r->get('/route2', $factory(new RequestHandler5, [
         new SomeMiddleware5,
     ]));

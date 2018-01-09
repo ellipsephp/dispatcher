@@ -34,7 +34,7 @@ describe('ResolverWithMiddleware', function () {
 
     describe('->with()', function () {
 
-        it ('should return a new ResolverWithMiddleware using this factory as delegate and the given iterable list of middleware', function () {
+        it ('should return a new ResolverWithMiddleware using this factory as delegate and the given iterable middleware queue', function () {
 
             $test = function ($middleware) {
 
@@ -68,7 +68,7 @@ describe('ResolverWithMiddleware', function () {
 
         });
 
-        context('when no iterable list of middleware is given', function () {
+        context('when no iterable middleware queue is given', function () {
 
             it('should proxy the delegate with a new UnresolvedDispatcher using the given request handler and an empty array of middleware', function () {
 
@@ -84,9 +84,9 @@ describe('ResolverWithMiddleware', function () {
 
         });
 
-        context('when an iterable list of middleware is given', function () {
+        context('when an iterable middleware queue is given', function () {
 
-            it('should proxy the delegate with a new UnresolvedDispatcher using the given request handler and iterable list of middleware', function () {
+            it('should proxy the delegate with a new UnresolvedDispatcher using the given request handler and iterable middleware queue', function () {
 
                 $test = function ($middleware) {
 

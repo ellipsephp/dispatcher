@@ -2,6 +2,7 @@
 
 use function Eloquent\Phony\Kahlan\mock;
 
+use Interop\Http\Server\MiddlewareInterface;
 use Interop\Http\Server\RequestHandlerInterface;
 
 use Ellipse\Dispatcher;
@@ -33,7 +34,7 @@ describe('DispatcherFactory', function () {
 
             });
 
-            context('when no iterable list of middleware is given', function () {
+            context('when no iterable middleware queue is given', function () {
 
                 it('should return a new Dispatcher with the given request handler and an empty array of middleware', function () {
 
@@ -47,9 +48,9 @@ describe('DispatcherFactory', function () {
 
             });
 
-            context('when an iterable list of middleware is given', function () {
+            context('when an iterable middleware queue is given', function () {
 
-                it('should return a new Dispatcher using the given request handler and iterable list of middleware', function () {
+                it('should return a new Dispatcher using the given request handler iterable middleware queue', function () {
 
                     $test = function ($middleware) {
 
@@ -61,7 +62,10 @@ describe('DispatcherFactory', function () {
 
                     };
 
-                    $middleware = ['middleware1', 'middleware2'];
+                    $middleware = [
+                        mock(MiddlewareInterface::class)->get(),
+                        mock(MiddlewareInterface::class)->get(),
+                    ];
 
                     $test($middleware);
                     $test(new ArrayIterator($middleware));
@@ -87,7 +91,7 @@ describe('DispatcherFactory', function () {
 
                 };
 
-                $exception = new RequestHandlerTypeException('handler');
+                $exception = new RequestHandlerTypeException('handler', mock(TypeError::class)->get());
 
                 expect($test)->toThrow($exception);
 

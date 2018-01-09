@@ -2,13 +2,14 @@
 
 namespace Ellipse\Dispatcher\Exceptions;
 
+use TypeError;
 use UnexpectedValueException;
 
 use Interop\Http\Server\RequestHandlerInterface;
 
 class RequestHandlerTypeException extends UnexpectedValueException implements DispatcherExceptionInterface
 {
-    public function __construct($value)
+    public function __construct($value, TypeError $previous)
     {
         $template = "Trying to use a value of type %s as request handler - object implementing %s expected";
 
@@ -16,6 +17,6 @@ class RequestHandlerTypeException extends UnexpectedValueException implements Di
 
         $msg = sprintf($template, $type, RequestHandlerInterface::class);
 
-        parent::__construct($msg);
+        parent::__construct($msg, 0, $previous);
     }
 }

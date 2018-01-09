@@ -2,13 +2,14 @@
 
 namespace Ellipse\Dispatcher\Exceptions;
 
+use TypeError;
 use UnexpectedValueException;
 
 use Interop\Http\Server\MiddlewareInterface;
 
 class MiddlewareTypeException extends UnexpectedValueException implements DispatcherExceptionInterface
 {
-    public function __construct($value)
+    public function __construct($value, TypeError $previous)
     {
         $template = "Trying to use a value of type %s as middleware - object implementing %s expected";
 
@@ -16,6 +17,6 @@ class MiddlewareTypeException extends UnexpectedValueException implements Dispat
 
         $msg = sprintf($template, $type, MiddlewareInterface::class);
 
-        parent::__construct($msg);
+        parent::__construct($msg, 0, $previous);
     }
 }
