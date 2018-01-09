@@ -1,10 +1,13 @@
 <?php
 
+use function Eloquent\Phony\Kahlan\mock;
+
+use Interop\Http\Server\RequestHandlerInterface;
+
 use Ellipse\Dispatcher;
 use Ellipse\DispatcherFactoryInterface;
 use Ellipse\DispatcherFactory;
-use Ellipse\Dispatcher\MiddlewareProxy;
-use Ellipse\Dispatcher\RequestHandlerProxy;
+use Ellipse\Dispatcher\Exceptions\RequestHandlerTypeException;
 
 describe('DispatcherFactory', function () {
 
@@ -22,49 +25,71 @@ describe('DispatcherFactory', function () {
 
     describe('->__invoke()', function () {
 
-        context('when no iterable list of middleware is given', function () {
+        context('when the given request handler implements RequestHandlerInterface', function () {
 
-            it('should return a new Dispatcher with the given request handler and an empty array of middleware wrapped in proxies', function () {
+            beforeEach(function () {
 
-                $test = ($this->factory)('handler');
+                $this->handler = mock(RequestHandlerInterface::class)->get();
 
-                $dispatcher = new Dispatcher(
-                    new MiddlewareProxy([]),
-                    new RequestHandlerProxy('handler')
-                );
+            });
 
-                expect($test)->toEqual($dispatcher);
+            context('when no iterable list of middleware is given', function () {
+
+                it('should return a new Dispatcher with the given request handler and an empty array of middleware', function () {
+
+                    $test = ($this->factory)($this->handler);
+
+                    $dispatcher = new Dispatcher([], $this->handler);
+
+                    expect($test)->toEqual($dispatcher);
+
+                });
+
+            });
+
+            context('when an iterable list of middleware is given', function () {
+
+                it('should return a new Dispatcher using the given request handler and iterable list of middleware', function () {
+
+                    $test = function ($middleware) {
+
+                        $test = ($this->factory)($this->handler, $middleware);
+
+                        $dispatcher = new Dispatcher($middleware, $this->handler);
+
+                        expect($test)->toEqual($dispatcher);
+
+                    };
+
+                    $middleware = ['middleware1', 'middleware2'];
+
+                    $test($middleware);
+                    $test(new ArrayIterator($middleware));
+                    $test(new class ($middleware) implements IteratorAggregate
+                    {
+                        public function __construct($middleware) { $this->middleware = $middleware; }
+                        public function getIterator() { return new ArrayIterator($this->middleware); }
+                    });
+
+                });
 
             });
 
         });
 
-        context('when an iterable list of middleware is given', function () {
+        context('when the given request handler implements RequestHandlerInterface', function () {
 
-            it('should return a new Dispatcher using the given request handler and iterable list of middleware wrapped in proxies', function () {
+            it('should throw a RequestHandlerTypeException', function () {
 
-                $test = function ($middleware) {
+                $test = function () {
 
-                    $test = ($this->factory)('handler', $middleware);
-
-                    $dispatcher = new Dispatcher(
-                        new MiddlewareProxy($middleware),
-                        new RequestHandlerProxy('handler')
-                    );
-
-                    expect($test)->toEqual($dispatcher);
+                    ($this->factory)('handler');
 
                 };
 
-                $middleware = ['middleware1', 'middleware2'];
+                $exception = new RequestHandlerTypeException('handler');
 
-                $test($middleware);
-                $test(new ArrayIterator($middleware));
-                $test(new class ($middleware) implements IteratorAggregate
-                {
-                    public function __construct($middleware) { $this->middleware = $middleware; }
-                    public function getIterator() { return new ArrayIterator($this->middleware); }
-                });
+                expect($test)->toThrow($exception);
 
             });
 

@@ -7,7 +7,10 @@ use Traversable;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
+use Interop\Http\Server\MiddlewareInterface;
 use Interop\Http\Server\RequestHandlerInterface;
+
+use Ellipse\Dispatcher\Exceptions\MiddlewareTypeException;
 
 class Dispatcher implements RequestHandlerInterface
 {
@@ -44,6 +47,7 @@ class Dispatcher implements RequestHandlerInterface
      *
      * @param \Psr\Http\Message\ServerRequestInterface $request
      * @return \Psr\Http\Message\ResponseInterface
+     * @throws \Ellipse\Dispatcher\Exceptions\MiddlewareTypeException
      */
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
@@ -53,10 +57,15 @@ class Dispatcher implements RequestHandlerInterface
 
         if (count($middleware) > 0) {
 
-            $head = current($middleware);
-            $tail = array_slice($middleware, 1);
+            $first = array_shift($middleware);
 
-            return $head->process($request, new Dispatcher($tail, $this->handler));
+            if ($first instanceof MiddlewareInterface) {
+
+                return $first->process($request, new Dispatcher($middleware, $this->handler));
+
+            }
+
+            throw new MiddlewareTypeException($first);
 
         }
 

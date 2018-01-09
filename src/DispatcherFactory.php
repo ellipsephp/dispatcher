@@ -2,8 +2,9 @@
 
 namespace Ellipse;
 
-use Ellipse\Dispatcher\MiddlewareProxy;
-use Ellipse\Dispatcher\RequestHandlerProxy;
+use Interop\Http\Server\RequestHandlerInterface;
+
+use Ellipse\Dispatcher\Exceptions\RequestHandlerTypeException;
 
 class DispatcherFactory implements DispatcherFactoryInterface
 {
@@ -14,12 +15,16 @@ class DispatcherFactory implements DispatcherFactoryInterface
      * @param mixed     $handler
      * @param iterable  $middleware
      * @return \Ellipse\Dispatcher
+     * @throws \Ellipse\Dispatcher\Exceptions\RequestHandlerTypeException
      */
     public function __invoke($handler, iterable $middleware = []): Dispatcher
     {
-        $middleware = new MiddlewareProxy($middleware);
-        $handler = new RequestHandlerProxy($handler);
+        if ($handler instanceof RequestHandlerInterface) {
 
-        return new Dispatcher($middleware, $handler);
+            return new Dispatcher($middleware, $handler);
+
+        }
+
+        throw new RequestHandlerTypeException($handler);
     }
 }
