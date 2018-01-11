@@ -8,7 +8,7 @@ use Interop\Http\Server\RequestHandlerInterface;
 
 use Ellipse\Dispatcher\Exceptions\MiddlewareTypeException;
 
-class RequestHandlerWithMiddlewareStack extends AbstractRequestHandlerProxy
+class RequestHandlerWithMiddlewareStack extends AbstractDecoratedRequestHandler
 {
     /**
      * Set up a request handler with middleware stack with the given delegate

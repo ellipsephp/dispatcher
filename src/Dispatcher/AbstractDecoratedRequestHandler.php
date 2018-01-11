@@ -7,7 +7,7 @@ use Psr\Http\Message\ResponseInterface;
 
 use Interop\Http\Server\RequestHandlerInterface;
 
-abstract class AbstractRequestHandlerProxy implements RequestHandlerInterface
+abstract class AbstractDecoratedRequestHandler implements RequestHandlerInterface
 {
     /**
      * The delegate.
@@ -17,8 +17,8 @@ abstract class AbstractRequestHandlerProxy implements RequestHandlerInterface
     private $delegate;
 
     /**
-     * Set up a request handler proxy with the given delegate. This class is a
-     * base class for request handler decorators.
+     * Set up a decorated request handler with the given delegate. This class is
+     * a base class for request handler decorators.
      *
      * @param \Interop\Http\Server\RequestHandlerInterface $delegate
      */
