@@ -1,46 +1,41 @@
 <?php
 
 use function Eloquent\Phony\Kahlan\mock;
+use function Eloquent\Phony\Kahlan\partialMock;
+
+use Interop\Http\Server\RequestHandlerInterface;
 
 use Ellipse\Dispatcher;
 use Ellipse\DispatcherFactoryInterface;
-use Ellipse\Dispatcher\UnresolvedDispatcher;
 use Ellipse\Dispatcher\ResolverWithMiddleware;
-use Ellipse\Dispatcher\ComposableResolverInterface;
 
 describe('ResolverWithMiddleware', function () {
 
     beforeEach(function () {
 
-        $this->delegate = mock(ComposableResolverInterface::class);
+        $this->delegate = mock(DispatcherFactoryInterface::class);
 
         $this->middleware = ['middleware1', 'middleware2'];
 
-        $this->factory = new ResolverWithMiddleware($this->delegate->get(), $this->middleware);
+        $this->resolver = new ResolverWithMiddleware($this->delegate->get(), $this->middleware);
 
     });
 
     it('should implement DispatcherFactoryInterface', function () {
 
-        expect($this->factory)->toBeAnInstanceOf(DispatcherFactoryInterface::class);
-
-    });
-
-    it('should implement ComposableResolverInterface', function () {
-
-        expect($this->factory)->toBeAnInstanceOf(ComposableResolverInterface::class);
+        expect($this->resolver)->toBeAnInstanceOf(DispatcherFactoryInterface::class);
 
     });
 
     describe('->with()', function () {
 
-        it ('should return a new ResolverWithMiddleware using this factory as delegate and the given iterable middleware queue', function () {
+        it ('should return a new ResolverWithMiddleware using this resolver and the given iterable middleware queue', function () {
 
             $test = function ($middleware) {
 
-                $test = $this->factory->with($middleware);
+                $test = $this->resolver->with($middleware);
 
-                $resolver = new ResolverWithMiddleware($this->factory, $middleware);
+                $resolver = new ResolverWithMiddleware($this->resolver, $middleware);
 
                 expect($test)->toEqual($resolver);
 
@@ -60,7 +55,7 @@ describe('ResolverWithMiddleware', function () {
 
     });
 
-    describe('->__invoke()', function () {
+    describe('->dispatcher()', function () {
 
         beforeEach(function () {
 
@@ -68,17 +63,101 @@ describe('ResolverWithMiddleware', function () {
 
         });
 
+        context("when the delegate is a ResolverWithMiddleware", function () {
+
+            it('should proxy the delegate ->dispatcher() method', function () {
+
+                $test = function ($middleware) {
+
+                    $delegate = mock(ResolverWithMiddleware::class);
+
+                    $resolver = new ResolverWithMiddleware($delegate->get(), []);
+
+                    $delegate->dispatcher->with('handler', $middleware)->returns($this->dispatcher);
+
+                    $test = $resolver->dispatcher('handler', $middleware);
+
+                    expect($test)->toBe($this->dispatcher);
+
+                };
+
+                $middleware = ['middleware1', 'middleware2'];
+
+                $test($middleware);
+                $test(new ArrayIterator($middleware));
+                $test(new class ($middleware) implements IteratorAggregate
+                {
+                    public function __construct($middleware) { $this->middleware = $middleware; }
+                    public function getIterator() { return new ArrayIterator($this->middleware); }
+                });
+
+            });
+
+        });
+
+        context("when the delegate is not a ResolverWithMiddleware", function () {
+
+            it('should proxy the delegate', function () {
+
+                $test = function ($middleware) {
+
+                    $delegate = mock(DispatcherFactoryInterface::class);
+
+                    $resolver = new ResolverWithMiddleware($delegate->get(), []);
+
+                    $delegate->__invoke->with('handler', $middleware)->returns($this->dispatcher);
+
+                    $test = $resolver->dispatcher('handler', $middleware);
+
+                    expect($test)->toBe($this->dispatcher);
+
+                };
+
+                $middleware = ['middleware1', 'middleware2'];
+
+                $test($middleware);
+                $test(new ArrayIterator($middleware));
+                $test(new class ($middleware) implements IteratorAggregate
+                {
+                    public function __construct($middleware) { $this->middleware = $middleware; }
+                    public function getIterator() { return new ArrayIterator($this->middleware); }
+                });
+
+            });
+
+        });
+
+    });
+
+    describe('->__invoke()', function () {
+
+        beforeEach(function () {
+
+            $this->delegate = mock(DispatcherFactoryInterface::class);
+            $this->middleware = ['middleware3', 'middleware4'];
+
+            $this->resolver = partialMock(ResolverWithMiddleware::class, [
+                $this->delegate->get(),
+                $this->middleware,
+            ]);
+
+            $this->handler = mock(RequestHandlerInterface::class)->get();
+            $this->dispatcher1 = mock(Dispatcher::class)->get();
+            $this->dispatcher2 = mock(Dispatcher::class)->get();
+
+        });
+
         context('when no iterable middleware queue is given', function () {
 
-            it('should proxy the delegate with a new UnresolvedDispatcher using the given request handler and an empty array of middleware', function () {
+            it('should resolve the decorated dispatcher with an empty array of middleware', function () {
 
-                $handler = new UnresolvedDispatcher([], 'handler');
+                $this->resolver->dispatcher->with($this->handler, [])->returns($this->dispatcher1);
 
-                $this->delegate->__invoke->with($handler, $this->middleware)->returns($this->dispatcher);
+                $this->delegate->__invoke->with($this->dispatcher1, $this->middleware)->returns($this->dispatcher2);
 
-                $test = ($this->factory)('handler');
+                $test = ($this->resolver->get())($this->handler);
 
-                expect($test)->toBe($this->dispatcher);
+                expect($test)->toBe($this->dispatcher2);
 
             });
 
@@ -86,21 +165,21 @@ describe('ResolverWithMiddleware', function () {
 
         context('when an iterable middleware queue is given', function () {
 
-            it('should proxy the delegate with a new UnresolvedDispatcher using the given request handler and iterable middleware queue', function () {
+            it('should resolve the decorated dispatcher with the given iterable middleware queue', function () {
 
                 $test = function ($middleware) {
 
-                    $handler = new UnresolvedDispatcher($middleware, 'handler');
+                    $this->resolver->dispatcher->with($this->handler, $middleware)->returns($this->dispatcher1);
 
-                    $this->delegate->__invoke->with($handler, $this->middleware)->returns($this->dispatcher);
+                    $this->delegate->__invoke->with($this->dispatcher1, $this->middleware)->returns($this->dispatcher2);
 
-                    $test = ($this->factory)('handler', $middleware);
+                    $test = ($this->resolver->get())($this->handler, $middleware);
 
-                    expect($test)->toBe($this->dispatcher);
+                    expect($test)->toBe($this->dispatcher2);
 
                 };
 
-                $middleware = ['middleware3', 'middleware4'];
+                $middleware = ['middleware1', 'middleware2'];
 
                 $test($middleware);
                 $test(new ArrayIterator($middleware));

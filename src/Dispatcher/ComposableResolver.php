@@ -5,36 +5,39 @@ namespace Ellipse\Dispatcher;
 use Ellipse\Dispatcher;
 use Ellipse\DispatcherFactoryInterface;
 
-class ComposableResolver implements ComposableResolverInterface
+class ComposableResolver implements DispatcherFactoryInterface
 {
     /**
-     * The factory to use for resolving unresolved dispatchers.
+     * The delegate.
      *
      * @var \Ellipse\DispatcherFactoryInterface
      */
-    private $factory;
+    private $delegate;
 
     /**
-     * Set up a composer resolver with the given dispatcher factory.
+     * Set up a composable resolver with the given delegate.
      *
-     * @param \Ellipse\DispatcherFactoryInterface $factory
+     * @param \Ellipse\DispatcherFactoryInterface $delegate
      */
-    public function __construct(DispatcherFactoryInterface $factory)
+    public function __construct(DispatcherFactoryInterface $delegate)
     {
-        $this->factory = $factory;
+        $this->delegate = $delegate;
     }
 
     /**
-     * @inheritdoc
+     * Returns a new DispatcherWithMiddleware using the delegate and the given
+     * iterable middleware queue.
+     *
+     * @param iterable $middleware
+     * @return \Ellipse\Dispatcher\ResolverWithMiddleware
      */
     public function with(iterable $middleware): ResolverWithMiddleware
     {
-        return new ResolverWithMiddleware($this, $middleware);
+        return new ResolverWithMiddleware($this->delegate, $middleware);
     }
 
     /**
-     * Proxy the ->value() method of a new UnresolvedDispatcher using the given
-     * request handler and iterable list of middleware.
+     * Proxy the delegate.
      *
      * @param mixed     $handler
      * @param iterable  $middleware
@@ -42,6 +45,6 @@ class ComposableResolver implements ComposableResolverInterface
      */
     public function __invoke($handler, iterable $middleware = []): Dispatcher
     {
-        return (new UnresolvedDispatcher($middleware, $handler))->value($this->factory);
+        return ($this->delegate)($handler, $middleware);
     }
 }

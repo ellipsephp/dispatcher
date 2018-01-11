@@ -3,18 +3,19 @@
 namespace Ellipse\Dispatcher;
 
 use Ellipse\Dispatcher;
+use Ellipse\DispatcherFactoryInterface;
 
-class ResolverWithMiddleware implements ComposableResolverInterface
+class ResolverWithMiddleware implements DispatcherFactoryInterface
 {
     /**
      * The delegate.
      *
-     * @var \Ellipse\Dispatcher\ComposableResolverInterface
+     * @var \Ellipse\Dispatcher\DispatcherFactoryInterface
      */
     private $delegate;
 
     /**
-     * The iterable list of middleware to pass to the delegate.
+     * The iterable middleware queue to pass to the delegate.
      *
      * @var iterable
      */
@@ -22,19 +23,23 @@ class ResolverWithMiddleware implements ComposableResolverInterface
 
     /**
      * Set up a resolver with middleware with the given delegate and iterable
-     * list of middleware.
+     * middleware queue.
      *
-     * @param \Ellipse\Dispatcher\ComposableResolverInterface   $delegate
+     * @param \\Ellipse\Dispatcher\DispatcherFactoryInterface   $delegate
      * @param iterable                                          $middleware
      */
-    public function __construct(ComposableResolverInterface $delegate, iterable $middleware)
+    public function __construct(DispatcherFactoryInterface $delegate, iterable $middleware)
     {
         $this->delegate = $delegate;
         $this->middleware = $middleware;
     }
 
     /**
-     * @inheritdoc
+     * Returns a new DispatcherWithMiddleware using this resolver as delegate
+     * and the given iterable middleware queue.
+     *
+     * @param iterable $middleware
+     * @return \Ellipse\Dispatcher\ResolverWithMiddleware
      */
     public function with(iterable $middleware): ResolverWithMiddleware
     {
@@ -42,8 +47,8 @@ class ResolverWithMiddleware implements ComposableResolverInterface
     }
 
     /**
-     * Proxy the delegate with a new UnresolvedDispatcher and the iterable list
-     * of middleware.
+     * Proxy the delegate with the resolved value of the dispatcher to decorate
+     * and the iterable middleware queue.
      *
      * @param mixed     $handler
      * @param iterable  $middleware
@@ -51,8 +56,26 @@ class ResolverWithMiddleware implements ComposableResolverInterface
      */
     public function __invoke($handler, iterable $middleware = []): Dispatcher
     {
-        $handler = new UnresolvedDispatcher($middleware, $handler);
+        $handler = $this->dispatcher($handler, $middleware);
 
         return ($this->delegate)($handler, $this->middleware);
+    }
+
+    /**
+     * Proxy the first delegate which is not a ResolverWithMiddleware.
+     *
+     * @param mixed     $handler
+     * @param iterable  $middleware
+     * @return \Ellipse\Dispatcher
+     */
+    public function dispatcher($handler, iterable $middleware = []): Dispatcher
+    {
+        if ($this->delegate instanceof ResolverWithMiddleware) {
+
+            return $this->delegate->dispatcher($handler, $middleware);
+
+        }
+
+        return ($this->delegate)($handler, $middleware);
     }
 }

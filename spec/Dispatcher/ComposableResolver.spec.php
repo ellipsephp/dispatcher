@@ -6,7 +6,6 @@ use Ellipse\Dispatcher;
 use Ellipse\DispatcherFactoryInterface;
 use Ellipse\Dispatcher\ComposableResolver;
 use Ellipse\Dispatcher\ResolverWithMiddleware;
-use Ellipse\Dispatcher\ComposableResolverInterface;
 
 describe('ComposableResolver', function () {
 
@@ -14,31 +13,25 @@ describe('ComposableResolver', function () {
 
         $this->delegate = mock(DispatcherFactoryInterface::class);
 
-        $this->factory = new ComposableResolver($this->delegate->get());
+        $this->resolver = new ComposableResolver($this->delegate->get());
 
     });
 
     it('should implement DispatcherFactoryInterface', function () {
 
-        expect($this->factory)->toBeAnInstanceOf(DispatcherFactoryInterface::class);
-
-    });
-
-    it('should implement ComposableResolverInterface', function () {
-
-        expect($this->factory)->toBeAnInstanceOf(ComposableResolverInterface::class);
+        expect($this->resolver)->toBeAnInstanceOf(DispatcherFactoryInterface::class);
 
     });
 
     describe('->with()', function () {
 
-        it ('should return a new ResolverWithMiddleware using this factory as delegate and the given iterable middleware queue', function () {
+        it ('should return a new ResolverWithMiddleware using the delegate and the given iterable middleware queue', function () {
 
             $test = function ($middleware) {
 
-                $test = $this->factory->with($middleware);
+                $test = $this->resolver->with($middleware);
 
-                $resolver = new ResolverWithMiddleware($this->factory, $middleware);
+                $resolver = new ResolverWithMiddleware($this->delegate->get(), $middleware);
 
                 expect($test)->toEqual($resolver);
 
@@ -68,11 +61,11 @@ describe('ComposableResolver', function () {
 
         context('when no iterable middleware queue is given', function () {
 
-            it('should proxy a new UnresolvedDispatcher with the given request handler and an empty array of middleware', function () {
+            it('should proxy the delegate with the given request handler and an empty array of middleware', function () {
 
                 $this->delegate->__invoke->with('handler', [])->returns($this->dispatcher);
 
-                $test = ($this->factory)('handler');
+                $test = ($this->resolver)('handler');
 
                 expect($test)->toBe($this->dispatcher);
 
@@ -82,13 +75,13 @@ describe('ComposableResolver', function () {
 
         context('when an iterable middleware queue is given', function () {
 
-            it('should proxy a new UnresolverDispatcher with the given request handler and iterable middleware queue', function () {
+            it('should proxy the delegate with the given request handler and iterable middleware queue', function () {
 
                 $test = function ($middleware) {
 
                     $this->delegate->__invoke->with('handler', $middleware)->returns($this->dispatcher);
 
-                    $test = ($this->factory)('handler', $middleware);
+                    $test = ($this->resolver)('handler', $middleware);
 
                     expect($test)->toBe($this->dispatcher);
 
