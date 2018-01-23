@@ -4,8 +4,6 @@ namespace Ellipse;
 
 use TypeError;
 
-use Interop\Http\Server\RequestHandlerInterface;
-
 use Ellipse\Dispatcher\Exceptions\DispatcherCreationException;
 
 class DispatcherFactory implements DispatcherFactoryInterface

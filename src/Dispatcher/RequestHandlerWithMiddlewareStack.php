@@ -4,7 +4,7 @@ namespace Ellipse\Dispatcher;
 
 use TypeError;
 
-use Interop\Http\Server\RequestHandlerInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 
 use Ellipse\Dispatcher\Exceptions\MiddlewareTypeException;
 
@@ -14,8 +14,8 @@ class RequestHandlerWithMiddlewareStack extends AbstractDecoratedRequestHandler
      * Set up a request handler with middleware stack with the given delegate
      * and the middleware stack wrapping it.
      *
-     * @param \Interop\Http\Server\RequestHandlerInterface  $delegate
-     * @param array                                         $middleware
+     * @param \Psr\Http\Server\RequestHandlerInterface  $delegate
+     * @param array                                     $middleware
      * @throws \Ellipse\Dispatcher\Exceptions\MiddlewareTypeException
      */
     public function __construct(RequestHandlerInterface $delegate, array $middleware)

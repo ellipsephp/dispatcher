@@ -3,7 +3,7 @@
 use function Eloquent\Phony\Kahlan\mock;
 use function Eloquent\Phony\Kahlan\partialMock;
 
-use Interop\Http\Server\RequestHandlerInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 
 use Ellipse\Dispatcher;
 use Ellipse\DispatcherFactoryInterface;

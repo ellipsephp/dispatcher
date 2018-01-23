@@ -4,7 +4,7 @@ namespace Ellipse\Dispatcher\Exceptions;
 
 use TypeError;
 
-use Interop\Http\Server\MiddlewareInterface;
+use Psr\Http\Server\MiddlewareInterface;
 
 class MiddlewareTypeException extends TypeError implements DispatcherExceptionInterface
 {

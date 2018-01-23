@@ -4,8 +4,7 @@ use function Eloquent\Phony\Kahlan\mock;
 
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
-
-use Interop\Http\Server\RequestHandlerInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 
 use Ellipse\Dispatcher\FallbackResponse;
 

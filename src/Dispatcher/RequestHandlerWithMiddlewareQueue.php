@@ -2,7 +2,7 @@
 
 namespace Ellipse\Dispatcher;
 
-use Interop\Http\Server\RequestHandlerInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 
 use Ellipse\Dispatcher\Exceptions\MiddlewareTypeException;
 
@@ -12,8 +12,8 @@ class RequestHandlerWithMiddlewareQueue extends RequestHandlerWithMiddlewareStac
      * Set up a request handler with middleware queue with the given delegate
      * and the middleware queue wrapping it.
      *
-     * @param \Interop\Http\Server\RequestHandlerInterface  $delegate
-     * @param array                                         $middleware
+     * @param \Psr\Http\Server\RequestHandlerInterface  $delegate
+     * @param array                                     $middleware
      * @throws \Ellipse\Dispatcher\Exceptions\MiddlewareTypeException
      */
     public function __construct(RequestHandlerInterface $delegate, array $middleware)

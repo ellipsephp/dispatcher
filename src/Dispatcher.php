@@ -4,8 +4,8 @@ namespace Ellipse;
 
 use Traversable;
 
-use Interop\Http\Server\MiddlewareInterface;
-use Interop\Http\Server\RequestHandlerInterface;
+use Psr\Http\Server\MiddlewareInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 
 use Ellipse\Dispatcher\RequestHandlerWithMiddleware;
 use Ellipse\Dispatcher\RequestHandlerWithMiddlewareQueue;
@@ -17,8 +17,8 @@ class Dispatcher extends RequestHandlerWithMiddlewareQueue
      * Set up a dispatcher with the given request handler to decorate and the
      * iterable middleware queue wrapping it.
      *
-     * @param \Interop\Http\Server\RequestHandlerInterface  $handler
-     * @param iterable                                      $middleware
+     * @param \Psr\Http\Server\RequestHandlerInterface  $handler
+     * @param iterable                                  $middleware
      * @throws \Ellipse\Dispatcher\Exceptions\MiddlewareTypeException
      */
     public function __construct(RequestHandlerInterface $handler, iterable $middleware = [])
@@ -42,7 +42,7 @@ class Dispatcher extends RequestHandlerWithMiddlewareQueue
      * Return a new Dispatcher with the given middleware wrapped around the
      * current one.
      *
-     * @param \Interop\Http\Server\MiddlewareInterface $middleware
+     * @param \Psr\Http\Server\MiddlewareInterface $middleware
      * @return \Ellipse\Dispatcher
      */
     public function with(MiddlewareInterface $middleware): Dispatcher

@@ -4,23 +4,22 @@ namespace Ellipse\Dispatcher;
 
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
-
-use Interop\Http\Server\MiddlewareInterface;
-use Interop\Http\Server\RequestHandlerInterface;
+use Psr\Http\Server\MiddlewareInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 
 class RequestHandlerWithMiddleware implements RequestHandlerInterface
 {
     /**
      * The delegate.
      *
-     * @var \Interop\Http\Server\RequestHandlerInterface
+     * @var \Psr\Http\Server\RequestHandlerInterface
      */
     private $delegate;
 
     /**
      * The middleware to process.
      *
-     * @var \Interop\Http\Server\MiddlewareInterface
+     * @var \Psr\Http\Server\MiddlewareInterface
      */
     private $middleware;
 
@@ -28,8 +27,8 @@ class RequestHandlerWithMiddleware implements RequestHandlerInterface
      * Set up a request handler with middleware with the given delegate and
      * middleware.
      *
-     * @param \Interop\Http\Server\RequestHandlerInterface  $delegate
-     * @param \Interop\Http\Server\MiddlewareInterface      $middleware
+     * @param \Psr\Http\Server\RequestHandlerInterface  $delegate
+     * @param \Psr\Http\Server\MiddlewareInterface      $middleware
      */
     public function __construct(RequestHandlerInterface $delegate, MiddlewareInterface $middleware)
     {
