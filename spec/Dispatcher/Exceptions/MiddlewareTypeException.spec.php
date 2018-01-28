@@ -9,7 +9,9 @@ describe('MiddlewareTypeException', function () {
 
     beforeEach(function () {
 
-        $this->exception = new MiddlewareTypeException('invalid', mock(TypeError::class)->get());
+        $this->previous = mock(TypeError::class)->get();
+
+        $this->exception = new MiddlewareTypeException('invalid', $this->previous);
 
     });
 
@@ -22,6 +24,18 @@ describe('MiddlewareTypeException', function () {
     it('should implement DispatcherExceptionInterface', function () {
 
         expect($this->exception)->toBeAnInstanceOf(DispatcherExceptionInterface::class);
+
+    });
+
+    describe('->getPrevious()', function () {
+
+        it('should return the previous exception', function () {
+
+            $test = $this->exception->getPrevious();
+
+            expect($test)->toBe($this->previous);
+
+        });
 
     });
 

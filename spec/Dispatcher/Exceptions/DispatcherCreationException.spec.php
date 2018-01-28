@@ -7,11 +7,29 @@ use Ellipse\Dispatcher\Exceptions\DispatcherCreationException;
 
 describe('DispatcherCreationException', function () {
 
+    beforeEach(function () {
+
+        $this->previous = mock(TypeError::class)->get();
+
+        $this->exception = new DispatcherCreationException($this->previous);
+
+    });
+
     it('should implement DispatcherExceptionInterface', function () {
 
-        $test = new DispatcherCreationException(mock(TypeError::class)->get());
+        expect($this->exception)->toBeAnInstanceOf(DispatcherExceptionInterface::class);
 
-        expect($test)->toBeAnInstanceOf(DispatcherExceptionInterface::class);
+    });
+
+    describe('->getPrevious()', function () {
+
+        it('should return the previous exception', function () {
+
+            $test = $this->exception->getPrevious();
+
+            expect($test)->toBe($this->previous);
+
+        });
 
     });
 

@@ -9,6 +9,6 @@ class DispatcherCreationException extends RuntimeException implements Dispatcher
 {
     public function __construct(TypeError $previous)
     {
-        parent::__construct("Dispatcher creation failed.", 0, $previous);
+        parent::__construct("Dispatcher creation failed", 0, $previous);
     }
 }
