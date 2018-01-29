@@ -1,6 +1,6 @@
 # Dispatcher
 
-This package provides a basic **[Psr-15 middleware](https://github.com/http-interop/http-server-middleware)** dispatcher implementation.
+This package provides a **[Psr-15](https://github.com/php-fig/fig-standards/blob/master/accepted/PSR-15-request-handlers.md)** dispatcher implementation.
 
 **Require** php >= 7.1
 
@@ -15,14 +15,14 @@ This package provides a basic **[Psr-15 middleware](https://github.com/http-inte
 
 ## Getting started
 
-This package provides an `Ellipse\Dispatcher` class allowing to process a Psr-7 request through a list of [Psr-15 middleware](https://github.com/http-interop/http-server-middleware) before handling it with a [Psr-15 request handler](https://github.com/http-interop/http-server-handler).
+This package provides an `Ellipse\Dispatcher` class allowing to process a Psr-7 request through a list of [Psr-15 middleware](https://github.com/php-fig/fig-standards/blob/master/accepted/PSR-15-request-handlers.md) before handling it with a [Psr-15 request handler](https://github.com/php-fig/fig-standards/blob/master/accepted/PSR-15-request-handlers.md).
 
 It is basically a Psr-15 request handler decorator wrapping a list of middleware around a request handler. Its constructor takes two parameters:
 
-- a request handler instance implementing `Interop\Http\Server\RequestHandlerInterface`
-- an `iterable` (array or implementation of `Traversable`) containing middleware instances implementing `Interop\Http\Server\MiddlewareInterface`
+- a request handler instance implementing `Psr\Http\Server\RequestHandlerInterface`
+- an `iterable` (array or implementation of `Traversable`) containing middleware instances implementing `Psr\Http\Server\MiddlewareInterface`
 
-The `Dispatcher` itself implements `Interop\Http\Server\RequestHandlerInterface` so a Psr-7 response is produced by using its `->handle()` method with a Psr-7 request. It also means it can be used as the request handler of another `Dispatcher`.
+The `Dispatcher` itself implements `Psr\Http\Server\RequestHandlerInterface` so a Psr-7 response is produced by using its `->handle()` method with a Psr-7 request. It also means it can be used as the request handler of another `Dispatcher`.
 
 The same `Dispatcher` can be used multiple times to handle as many request as needed. The only exception is when creating a `Dispatcher` using a php `Generator` as middleware list: it could only be used one time because a php `Generator` can't be rewinded.
 
