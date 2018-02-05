@@ -1,6 +1,6 @@
 # Dispatcher
 
-This package provides a **[Psr-15](https://github.com/php-fig/fig-standards/blob/master/accepted/PSR-15-request-handlers.md)** dispatcher implementation.
+This package provides a **[Psr-15](https://www.php-fig.org/psr/psr-15/)** dispatcher implementation.
 
 **Require** php >= 7.1
 
@@ -15,7 +15,7 @@ This package provides a **[Psr-15](https://github.com/php-fig/fig-standards/blob
 
 ## Getting started
 
-This package provides an `Ellipse\Dispatcher` class allowing to process a Psr-7 request through a list of [Psr-15 middleware](https://github.com/php-fig/fig-standards/blob/master/accepted/PSR-15-request-handlers.md) before handling it with a [Psr-15 request handler](https://github.com/php-fig/fig-standards/blob/master/accepted/PSR-15-request-handlers.md).
+This package provides an `Ellipse\Dispatcher` class allowing to process a Psr-7 request through a list of [Psr-15 middleware](https://www.php-fig.org/psr/psr-15/) before handling it with a [Psr-15 request handler](https://www.php-fig.org/psr/psr-15/).
 
 It is basically a Psr-15 request handler decorator wrapping a list of middleware around a request handler. Its constructor takes two parameters:
 
