@@ -8,7 +8,7 @@ use Psr\Http\Server\MiddlewareInterface;
 
 class MiddlewareTypeException extends TypeError implements DispatcherExceptionInterface
 {
-    public function __construct($value, TypeError $previous)
+    public function __construct($value)
     {
         $template = "Trying to use a value of type %s as middleware - object implementing %s expected";
 
@@ -16,6 +16,6 @@ class MiddlewareTypeException extends TypeError implements DispatcherExceptionIn
 
         $msg = sprintf($template, $type, MiddlewareInterface::class);
 
-        parent::__construct($msg, 0, $previous);
+        parent::__construct($msg);
     }
 }

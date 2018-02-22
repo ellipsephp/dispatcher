@@ -58,7 +58,7 @@ describe('Dispatcher', function () {
 
                     };
 
-                    $exception = new MiddlewareTypeException('middleware', mock(TypeError::class)->get());
+                    $exception = new MiddlewareTypeException('middleware');
 
                     expect($test)->toThrow($exception);
 

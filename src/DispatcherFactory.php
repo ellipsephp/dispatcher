@@ -2,34 +2,29 @@
 
 namespace Ellipse;
 
-use TypeError;
+use Psr\Http\Server\RequestHandlerInterface;
 
-use Ellipse\Dispatcher\Exceptions\DispatcherCreationException;
+use Ellipse\Dispatcher\Exceptions\RequestHandlerTypeException;
 
 class DispatcherFactory implements DispatcherFactoryInterface
 {
     /**
      * Return a new Dispatcher using the given request handler and iterable
-     * middleware queue. Catch any middleware or request handler type error and
-     * rethrow them wrapped around a dispatcher creation exception.
+     * middleware queue.
      *
      * @param mixed     $handler
      * @param iterable  $middleware
      * @return \Ellipse\Dispatcher
-     * @throws \Ellipse\Dispatcher\Exceptions\DispatcherCreationException
+     * @throws \Ellipse\Dispatcher\Exceptions\RequestHandlerTypeException
      */
     public function __invoke($handler, iterable $middleware = []): Dispatcher
     {
-        try {
+        if ($handler instanceof RequestHandlerInterface) {
 
             return new Dispatcher($handler, $middleware);
 
         }
 
-        catch (TypeError $e) {
-
-            throw new DispatcherCreationException($e);
-
-        }
+        throw new RequestHandlerTypeException($handler);
     }
 }

@@ -3,13 +3,13 @@
 use function Eloquent\Phony\Kahlan\mock;
 
 use Ellipse\Dispatcher\Exceptions\DispatcherExceptionInterface;
-use Ellipse\Dispatcher\Exceptions\MiddlewareTypeException;
+use Ellipse\Dispatcher\Exceptions\RequestHandlerTypeException;
 
-describe('MiddlewareTypeException', function () {
+describe('RequestHandlerTypeException', function () {
 
     beforeEach(function () {
 
-        $this->exception = new MiddlewareTypeException('invalid');
+        $this->exception = new RequestHandlerTypeException('invalid');
 
     });
 

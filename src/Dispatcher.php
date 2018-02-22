@@ -7,8 +7,9 @@ use Traversable;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 
-use Ellipse\Dispatcher\RequestHandlerWithMiddleware;
-use Ellipse\Dispatcher\RequestHandlerWithMiddlewareQueue;
+use Ellipse\Handlers\RequestHandlerWithMiddleware;
+use Ellipse\Handlers\RequestHandlerWithMiddlewareQueue;
+use Ellipse\Handlers\Exceptions\MiddlewareTypeException as BaseMiddlewareTypeException;
 use Ellipse\Dispatcher\Exceptions\MiddlewareTypeException;
 
 class Dispatcher extends RequestHandlerWithMiddlewareQueue
@@ -31,9 +32,9 @@ class Dispatcher extends RequestHandlerWithMiddlewareQueue
 
         }
 
-        catch (MiddlewareTypeException $e) {
+        catch (BaseMiddlewareTypeException $e) {
 
-            throw $e;
+            throw new MiddlewareTypeException($e->value());
 
         }
     }

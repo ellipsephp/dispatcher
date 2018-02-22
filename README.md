@@ -130,7 +130,7 @@ $response = $dispatcher->handle($request);
 
 Another common practice is to allow callables and class names registered in a container to be used as regular Psr-15 middleware/request handler.
 
-For this purpose this package also provides an `Ellipse\DispatcherFactory` class allowing to produce `Dispatcher` instances. Its `__invoke()` method takes any value as request handler and an optional middleware queue. If a given middleware is not an implementation of `MiddlewareInterface` or the given request handler is not an implementation of `RequestHandlerInterface`, an `Ellipse\Dispatcher\Exceptions\DispatcherCreationException` is thrown.
+For this purpose this package also provides an `Ellipse\DispatcherFactory` class allowing to produce `Dispatcher` instances. Its `__invoke()` method takes any value as request handler and an optional middleware queue. If the given request handler is not an implementation of `RequestHandlerInterface`, an `Ellipse\Dispatcher\Exceptions\RequestHandlerTypeException` is thrown.
 
 ```php
 <?php
@@ -148,11 +148,11 @@ $factory = new DispatcherFactory;
 // Use the factory to create a new Dispatcher
 $dispatcher = $factory(new SomeRequestHandler, [new SomeMiddleware]);
 
-// A DispatcherCreationException is thrown when a middleware is not an implementation of MiddlewareInterface.
-$dispatcher = $factory(new SomeRequestHandler, [new SomeMiddleware, 'something']);
-
-// A DispatcherCreationException is thrown when the request handler is not an implementation of RequestHandlerInterface.
+// A RequestHandlerTypeException is thrown when the request handler is not an implementation of RequestHandlerInterface.
 $dispatcher = $factory('something', [new SomeMiddleware]);
+
+// A MiddlewareTypeException is thrown when a middleware is not an implementation of MiddlewareInterface.
+$dispatcher = $factory(new SomeRequestHandler, [new SomeMiddleware, 'something']);
 ```
 
 So what's the point of all this you may ask.
