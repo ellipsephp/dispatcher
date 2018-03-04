@@ -26,12 +26,12 @@ class ComposableResolver implements DispatcherFactoryInterface
 
     /**
      * Returns a new DispatcherWithMiddleware using the delegate and the given
-     * iterable middleware queue.
+     * middleware queue.
      *
-     * @param iterable $middleware
+     * @param array $middleware
      * @return \Ellipse\Dispatcher\ResolverWithMiddleware
      */
-    public function with(iterable $middleware): ResolverWithMiddleware
+    public function with(array $middleware): ResolverWithMiddleware
     {
         return new ResolverWithMiddleware($this->delegate, $middleware);
     }
@@ -39,11 +39,11 @@ class ComposableResolver implements DispatcherFactoryInterface
     /**
      * Proxy the delegate.
      *
-     * @param mixed     $handler
-     * @param iterable  $middleware
+     * @param mixed $handler
+     * @param array $middleware
      * @return \Ellipse\Dispatcher
      */
-    public function __invoke($handler, iterable $middleware = []): Dispatcher
+    public function __invoke($handler, array $middleware = []): Dispatcher
     {
         return ($this->delegate)($handler, $middleware);
     }

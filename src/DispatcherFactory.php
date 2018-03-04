@@ -9,15 +9,15 @@ use Ellipse\Dispatcher\Exceptions\RequestHandlerTypeException;
 class DispatcherFactory implements DispatcherFactoryInterface
 {
     /**
-     * Return a new Dispatcher using the given request handler and iterable
-     * middleware queue.
+     * Return a new Dispatcher using the given request handler and middleware
+     * queue.
      *
-     * @param mixed     $handler
-     * @param iterable  $middleware
+     * @param mixed $handler
+     * @param array $middleware
      * @return \Ellipse\Dispatcher
      * @throws \Ellipse\Dispatcher\Exceptions\RequestHandlerTypeException
      */
-    public function __invoke($handler, iterable $middleware = []): Dispatcher
+    public function __invoke($handler, array $middleware = []): Dispatcher
     {
         if ($handler instanceof RequestHandlerInterface) {
 

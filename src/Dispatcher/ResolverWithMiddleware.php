@@ -15,20 +15,20 @@ class ResolverWithMiddleware implements DispatcherFactoryInterface
     private $delegate;
 
     /**
-     * The iterable middleware queue to pass to the delegate.
+     * The middleware queue to pass to the delegate.
      *
-     * @var iterable
+     * @var array
      */
     private $middleware;
 
     /**
-     * Set up a resolver with middleware with the given delegate and iterable
-     * middleware queue.
+     * Set up a resolver with middleware with the given delegate and middleware
+     * queue.
      *
-     * @param \\Ellipse\Dispatcher\DispatcherFactoryInterface   $delegate
-     * @param iterable                                          $middleware
+     * @param \Ellipse\Dispatcher\DispatcherFactoryInterface    $delegate
+     * @param array                                             $middleware
      */
-    public function __construct(DispatcherFactoryInterface $delegate, iterable $middleware)
+    public function __construct(DispatcherFactoryInterface $delegate, array $middleware)
     {
         $this->delegate = $delegate;
         $this->middleware = $middleware;
@@ -36,25 +36,25 @@ class ResolverWithMiddleware implements DispatcherFactoryInterface
 
     /**
      * Returns a new DispatcherWithMiddleware using this resolver as delegate
-     * and the given iterable middleware queue.
+     * and the given middleware queue.
      *
-     * @param iterable $middleware
+     * @param array $middleware
      * @return \Ellipse\Dispatcher\ResolverWithMiddleware
      */
-    public function with(iterable $middleware): ResolverWithMiddleware
+    public function with(array $middleware): ResolverWithMiddleware
     {
         return new ResolverWithMiddleware($this, $middleware);
     }
 
     /**
      * Proxy the delegate with the resolved value of the dispatcher to decorate
-     * and the iterable middleware queue.
+     * and the given middleware queue.
      *
-     * @param mixed     $handler
-     * @param iterable  $middleware
+     * @param mixed $handler
+     * @param array $middleware
      * @return \Ellipse\Dispatcher
      */
-    public function __invoke($handler, iterable $middleware = []): Dispatcher
+    public function __invoke($handler, array $middleware = []): Dispatcher
     {
         $handler = $this->dispatcher($handler, $middleware);
 
@@ -64,11 +64,11 @@ class ResolverWithMiddleware implements DispatcherFactoryInterface
     /**
      * Proxy the first delegate which is not a ResolverWithMiddleware.
      *
-     * @param mixed     $handler
-     * @param iterable  $middleware
+     * @param mixed $handler
+     * @param array $middleware
      * @return \Ellipse\Dispatcher
      */
-    public function dispatcher($handler, iterable $middleware = []): Dispatcher
+    public function dispatcher($handler, array $middleware): Dispatcher
     {
         if ($this->delegate instanceof ResolverWithMiddleware) {
 

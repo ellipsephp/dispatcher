@@ -2,8 +2,6 @@
 
 namespace Ellipse;
 
-use Traversable;
-
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 
@@ -11,24 +9,23 @@ use Ellipse\Handlers\RequestHandlerWithMiddleware;
 use Ellipse\Handlers\RequestHandlerWithMiddlewareQueue;
 use Ellipse\Handlers\Exceptions\MiddlewareTypeException as BaseMiddlewareTypeException;
 use Ellipse\Dispatcher\Exceptions\MiddlewareTypeException;
+use Ellipse\Dispatcher\Exceptions\MiddlewareQueueTypeException;
 
 class Dispatcher extends RequestHandlerWithMiddlewareQueue
 {
     /**
-     * Set up a dispatcher with the given request handler to decorate and the
-     * iterable middleware queue wrapping it.
+     * Set up a dispatcher with the given middleware queue wrapped around the
+     * given request handler.
      *
      * @param \Psr\Http\Server\RequestHandlerInterface  $handler
-     * @param iterable                                  $middleware
+     * @param array                                     $middleware
      * @throws \Ellipse\Dispatcher\Exceptions\MiddlewareTypeException
      */
-    public function __construct(RequestHandlerInterface $handler, iterable $middleware = [])
+    public function __construct(RequestHandlerInterface $handler, array $middleware = [])
     {
         try {
 
-            parent::__construct($handler, $middleware instanceof Traversable
-                ? iterator_to_array($middleware)
-                : $middleware);
+            parent::__construct($handler, $middleware);
 
         }
 
@@ -48,6 +45,6 @@ class Dispatcher extends RequestHandlerWithMiddlewareQueue
      */
     public function with(MiddlewareInterface $middleware): Dispatcher
     {
-        return new Dispatcher(new RequestHandlerWithMiddleware($this, $middleware));
+        return new Dispatcher($this, [$middleware]);
     }
 }

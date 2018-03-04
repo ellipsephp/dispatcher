@@ -6,8 +6,8 @@ use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 
 use Ellipse\Dispatcher;
-use Ellipse\DispatcherFactoryInterface;
 use Ellipse\DispatcherFactory;
+use Ellipse\DispatcherFactoryInterface;
 use Ellipse\Dispatcher\Exceptions\RequestHandlerTypeException;
 
 describe('DispatcherFactory', function () {
@@ -34,7 +34,7 @@ describe('DispatcherFactory', function () {
 
             });
 
-            context('when no iterable middleware queue is given', function () {
+            context('when no middleware queue is given', function () {
 
                 it('should return a new Dispatcher with the given request handler and an empty array of middleware', function () {
 
@@ -48,32 +48,20 @@ describe('DispatcherFactory', function () {
 
             });
 
-            context('when an iterable middleware queue is given', function () {
+            context('when an middleware queue is given', function () {
 
-                it('should return a new Dispatcher using the given request handler and iterable middleware queue', function () {
-
-                    $test = function ($middleware) {
-
-                        $test = ($this->factory)($this->handler, $middleware);
-
-                        $dispatcher = new Dispatcher($this->handler, $middleware);
-
-                        expect($test)->toEqual($dispatcher);
-
-                    };
+                it('should return a new Dispatcher using the given request handler and middleware queue', function () {
 
                     $middleware = [
                         mock(MiddlewareInterface::class)->get(),
                         mock(MiddlewareInterface::class)->get(),
                     ];
 
-                    $test($middleware);
-                    $test(new ArrayIterator($middleware));
-                    $test(new class ($middleware) implements IteratorAggregate
-                    {
-                        public function __construct($middleware) { $this->middleware = $middleware; }
-                        public function getIterator() { return new ArrayIterator($this->middleware); }
-                    });
+                    $test = ($this->factory)($this->handler, $middleware);
+
+                    $dispatcher = new Dispatcher($this->handler, $middleware);
+
+                    expect($test)->toEqual($dispatcher);
 
                 });
 
