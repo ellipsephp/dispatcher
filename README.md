@@ -9,7 +9,6 @@ This package provides a [Psr-15](https://www.php-fig.org/psr/psr-15/) dispatcher
 **Run tests** `./vendor/bin/kahlan`
 
 - [Getting started](https://github.com/ellipsephp/dispatcher#getting-started)
-- [Using a fallback response](https://github.com/ellipsephp/dispatcher#using-a-fallback-response)
 - [Middleware and request handler resolving](https://github.com/ellipsephp/dispatcher#middleware-and-request-handler-resolving)
 - [Composing a dispatcher](https://github.com/ellipsephp/dispatcher#composing-a-dispatcher)
 
@@ -85,34 +84,6 @@ $dispatcher = $dispatcher->with(new SomeMiddleware2);
 $dispatcher = $dispatcher->with(new SomeMiddleware1);
 
 // Here the request goes through SomeMiddleware1, SomeMiddleware2, SomeMiddleware3 and SomeRequestHandler.
-$response = $dispatcher->handle($request);
-```
-
-## Using a fallback response
-
-A common practice is to define a fallback response to return when no middleware can produce a response on its own. It can be achieved by using a request handler taking this default response as parameter and returning it when its `->handle()` method is called. In order to spare the developper the creation of such a basic request handler, this package provides an `Ellipse\Dispatcher\FallbackResponse` class implementing this logic.
-
-```php
-<?php
-
-namespace App;
-
-use Ellipse\Dispatcher;
-use Ellipse\Dispatcher\FallbackResponse;
-
-// Get some incoming Psr-7 request.
-$request = some_psr7_request_factory();
-
-// Get some fallback Psr-7 response, here with a 404 status code.
-$response = some_psr7_response_factory()->withStatus(404);
-
-// Create a dispatcher using two middleware and a fallback response as request handler.
-$dispatcher = new Dispatcher(new FallbackResponse($response), [
-    new SomeMiddleware1,
-    new SomeMiddleware2,
-]);
-
-// Here the fallback response is returned when no middleware return a response on its own.
 $response = $dispatcher->handle($request);
 ```
 
