@@ -37,8 +37,9 @@
         }
     },
     "suggest": {
-        "ellipse/dispatcher-callable": "Allows to use callables as Psr-15 instances",
-        "ellipse/dispatcher-container": "Allows to use Psr-15 instances retrieved from a Psr-11 container using their class names",
-        "ellipse/dispatcher-controller": "Allows to use controller definitions as Psr-15 request handler"
+        "ellipse/dispatcher-callable": "Allows to use callables as Psr-15 middleware/request handlers",
+        "ellipse/dispatcher-container": "Allows to use Psr-15 middleware/request handler class names using a Psr-11 container",
+        "ellipse/dispatcher-controller": "Allows to use controller actions as Psr-15 request handlers using a Psr-11 container",
+        "ellipse/dispatcher-composable": "Allows to compose dispatcher"
     }
 }

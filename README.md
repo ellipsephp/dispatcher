@@ -140,8 +140,8 @@ $response = $factory($handler, [$middleware, new SomeMiddleware])->handle($reque
 
 Here is some ellipse packages providing resolvers for common resolving scenario:
 
-- [ellipse/dispatcher-callable](https://github.com/ellipsephp/dispatcher-callable) allowing to use callables as Psr-15 implementations
-- [ellipse/dispatcher-container](https://github.com/ellipsephp/dispatcher-container) allowing to use Psr-15 implementation class names using a [Psr-11](https://www.php-fig.org/psr/psr-11/) container
+- [ellipse/dispatcher-callable](https://github.com/ellipsephp/dispatcher-callable) allowing to use callables as Psr-15 middleware/request handlers
+- [ellipse/dispatcher-container](https://github.com/ellipsephp/dispatcher-container) allowing to use Psr-15 middleware/request handler class names using a [Psr-11](https://www.php-fig.org/psr/psr-11/) container
 - [ellipse/dispatcher-controller](https://github.com/ellipsephp/dispatcher-controller) allowing to use controller actions as Psr-15 request handlers using a [Psr-11](https://www.php-fig.org/psr/psr-11/) container
 
 Here is an example of a class implementing `DispatcherFactoryInterface` in case you need to create a custom one:
